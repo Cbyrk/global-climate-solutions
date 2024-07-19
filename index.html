@@ -41,3 +41,74 @@
     </footer>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Climate Solutions</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            let keysPressed = [];
+            const secretCode = ['g', 'c', 's'];
+
+            document.addEventListener('keydown', (event) => {
+                keysPressed.push(event.key.toLowerCase());
+                keysPressed = keysPressed.slice(-secretCode.length);
+
+                if (keysPressed.join('') === secretCode.join('')) {
+                    window.location.href = 'werknemers_login.html';
+                }
+            });
+
+            const mobileKeyboardButton = document.getElementById('mobile-keyboard-button');
+            if (mobileKeyboardButton) {
+                mobileKeyboardButton.addEventListener('click', () => {
+                    let keysPressedMobile = [];
+                    document.addEventListener('keydown', (event) => {
+                        keysPressedMobile.push(event.key.toLowerCase());
+                        keysPressedMobile = keysPressedMobile.slice(-secretCode.length);
+
+                        if (keysPressedMobile.join('') === secretCode.join('')) {
+                            window.location.href = 'werknemers_login.html';
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#diensten">Diensten</a></li>
+                <li><a href="#over-ons">Over Ons</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+        <div class="logo-container">
+            <img src="gcs_logo_final_cleaned_v5.png" alt="Global Climate Solutions Logo">
+            <span>Global Climate Solutions</span>
+        </div>
+        <button class="menu-button" onclick="toggleMenu()">☰</button>
+    </header>
+
+    <main>
+        <section id="home">
+            <h2>Duurzame klimaatoplossingen voor uw huis en bedrijf</h2>
+            <p>Welkom bij onze website. Wij bieden verwarmings-, koel-, verlichtings- en elektrische oplossingen van de hoogste kwaliteit en duurzaamheid.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Global Climate Solutions. Alle rechten voorbehouden.</p>
+    </footer>
+
+    <!-- Floating Keyboard Button for Mobile -->
+    <button id="mobile-keyboard-button" class="floating-button">⌨️</button>
+</body>
+</html>
+
