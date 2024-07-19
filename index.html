@@ -4,9 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Climate Solutions</title>
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        function toggleMenu() {
+            var nav = document.querySelector('header nav');
+            nav.classList.toggle('show');
+        }
+    </script>
 </head>
 <body>
-    <h1>Global Climate Solutions</h1>
-    <p>Welkom bij onze website.</p>
+    <header>
+        <div class="logo">
+            <img src="gcs_logo_final_enhanced_v5.jpg" alt="Global Climate Solutions Logo">
+            <span>Global Climate Solutions</span>
+        </div>
+        <button class="menu-button" onclick="toggleMenu()">☰</button>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#diensten">Diensten</a></li>
+                <li><a href="#over-ons">Over Ons</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home">
+            <h2>Duurzame klimaatoplossingen voor uw huis en bedrijf</h2>
+            <p>Welkom bij onze website. Wij bieden verwarmings-, koel-, verlichtings- en elektrische oplossingen van de hoogste kwaliteit en duurzaamheid.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Global Climate Solutions. Alle rechten voorbehouden.</p>
+    </footer>
 </body>
 </html>
