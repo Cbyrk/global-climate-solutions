@@ -39,6 +39,7 @@
             errorMessageElement.textContent = "";
 
             try {
+                console.log('Proberen in te loggen met email:', email);
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
                 console.log('Ingelogde gebruiker:', user);
