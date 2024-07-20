@@ -138,3 +138,40 @@
     </div>
 </body>
 </html>
+window.loginEmployee = (event) => {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    signInWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+            const user = userCredential.user;
+            const userDocRef = doc(db, 'employees', user.uid);
+            getDoc(userDocRef)
+                .then((docSnapshot) => {
+                    if (docSnapshot.exists()) {
+                        const role = docSnapshot.data().Role;
+                        console.log('Role:', role); // Voeg deze regel toe voor debugging
+                        if (role === 'Werknemer') {
+                            window.location.href = 'werknemers_dashboard.html';
+                        } else if (role === 'Admin') {
+                            window.location.href = 'admin_dashboard.html';
+                        } else {
+                            alert('Ongeldige rol. Neem contact op met de beheerder.');
+                        }
+                    } else {
+                        alert('Gebruikersgegevens niet gevonden.');
+                    }
+                });
+        })
+        .catch((error) => {
+            console.error('Fout bij inloggen:', error);
+            if (error.code === 'auth/wrong-password') {
+                document.getElementById('password').style.borderColor = 'red';
+            } else if (error.code === 'auth/user-not-found') {
+                document.getElementById('email').style.borderColor = 'red';
+            } else {
+                alert('Fout bij inloggen: ' + error.message);
+            }
+        });
+}
