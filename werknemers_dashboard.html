@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Firebase configuratie
         const firebaseConfig = {
@@ -85,6 +86,37 @@
             const breakHours = breakTime / 60; // pauzetijd in uren
             return diff - breakHours;
         }
+
+        // Functie om meter aan te passen
+        function updateWeekProgress(hoursWorked) {
+            const ctx = document.getElementById('weekProgressChart').getContext('2d');
+            const weekProgressChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Gewerkt', 'Resterend'],
+                    datasets: [{
+                        data: [hoursWorked, 40 - hoursWorked],
+                        backgroundColor: ['#4CAF50', '#2c2c2c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutoutPercentage: 80,
+                    rotation: -0.5 * Math.PI,
+                    animation: {
+                        animateRotate: true
+                    },
+                    tooltips: { enabled: false },
+                    hover: { mode: null }
+                }
+            });
+        }
+
+        // Functie om uurtarief en verdiend bedrag zichtbaar/verbergen te maken
+        function toggleVisibility(id) {
+            const element = document.getElementById(id);
+            element.style.display = element.style.display === 'none' ? 'block' : 'none';
+        }
     </script>
     <style>
         body {
@@ -138,20 +170,32 @@
             justify-content: space-between;
             margin-top: 10px;
         }
+        .toggle-button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .toggle-button:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
     <div class="dashboard-box" id="earnings-box">
         <h2>Verdiensten</h2>
         <p>Totale uren deze week: <span id="total-hours">0</span></p>
-        <p>Verdiend bedrag: €<span id="total-earnings">0</span></p>
+        <p>Verdiend bedrag: €<span id="total-earnings" style="display:none">0</span><button class="toggle-button" onclick="toggleVisibility('total-earnings')">Toon/Verberg</button></p>
         <div>
             <label for="hourly-rate">Uurtarief:</label>
-            <input type="number" id="hourly-rate" value="20">
+            <span id="hourly-rate" style="display:none">20</span><button class="toggle-button" onclick="toggleVisibility('hourly-rate')">Toon/Verberg</button>
         </div>
         <div>
             <label for="week-progress">Werkweek voortgang:</label>
-            <meter id="week-progress" value="0" min="0" max="40"></meter>
+            <canvas id="weekProgressChart" width="100" height="100"></canvas>
         </div>
     </div>
 
@@ -180,33 +224,4 @@
 
     <div class="dashboard-box" id="hours-logged-box">
         <h2>Geregistreerde Uren</h2>
-        <div id="hours-logged"></div>
-        <div class="actions">
-            <button onclick="previousWeek()">Vorige Week</button>
-            <button onclick="nextWeek()">Volgende Week</button>
-        </div>
-    </div>
-
-    <div class="dashboard-box" id="agenda-box">
-        <h2>Werk Agenda</h2>
-        <div id="calendar"></div>
-        <button onclick="addEvent()">Event Toevoegen</button>
-    </div>
-
-    <script>
-        // Placeholder functie voor agenda
-        function addEvent() {
-            alert('Event Toevoegen - Functie nog niet geïmplementeerd');
-        }
-
-        // Placeholder functie voor week navigatie
-        function previousWeek() {
-            alert('Vorige Week - Functie nog niet geïmplementeerd');
-        }
-
-        function nextWeek() {
-            alert('Volgende Week - Functie nog niet geïmplementeerd');
-        }
-    </script>
-</body>
-</html>
+        <div id="hours-
