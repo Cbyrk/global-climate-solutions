@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Werknemers Registratie</title>
+    <title>Registreer Werknemer</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
@@ -24,41 +24,129 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        function registerEmployee() {
+        // Functie voor werknemer registratie
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
             const email = document.getElementById('email').value;
-            const temporaryPassword = document.getElementById('temporaryPassword').value;
+            const password = document.getElementById('password').value;
+            const firstName = document.getElementById('first-name').value;
+            const lastName = document.getElementById('last-name').value;
+            const address = document.getElementById('address').value;
+            const city = document.getElementById('city').value;
+            const postalCode = document.getElementById('postal-code').value;
+            const hourlyRate = document.getElementById('hourly-rate').value;
+            const role = document.getElementById('role').value;
 
-            auth.createUserWithEmailAndPassword(email, temporaryPassword)
-                .then((userCredential) => {
-                    db.collection('employees').doc(userCredential.user.uid).set({
-                        email: email,
-                        mustChangePassword: true
-                    });
-                    alert('Werknemer geregistreerd!');
-                })
-                .catch((error) => {
-                    console.error('Fout bij registratie:', error);
-                    alert('Fout bij registratie: ' + error.message);
+            auth.createUserWithEmailAndPassword(email, password).then((userCredential) => {
+                const user = userCredential.user;
+                return db.collection('employees').doc(user.uid).set({
+                    email: email,
+                    firstName: firstName,
+                    lastName: lastName,
+                    address: address,
+                    city: city,
+                    postalCode: postalCode,
+                    hourlyRate: hourlyRate,
+                    role: role,
+                    mustChangePassword: true
                 });
-
-            return false;
-        }
+            }).then(() => {
+                alert('Werknemer succesvol geregistreerd');
+                document.getElementById('register-form').reset();
+            }).catch((error) => {
+                console.error('Fout bij registratie:', error);
+                alert('Er is een fout opgetreden bij de registratie: ' + error.message);
+            });
+        });
     </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .register-box {
+            background-color: #2c2c2c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            width: 300px;
+        }
+        .register-box h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #d4d4d4;
+        }
+        .register-box label {
+            display: block;
+            color: #d4d4d4;
+            margin-bottom: 5px;
+        }
+        .register-box input, .register-box select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #3a3a3a;
+            color: white;
+        }
+        .register-box button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        .register-box button:hover {
+            background-color: #45a049;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Werknemers Registratie</h1>
-    </header>
-    <main>
-        <form onsubmit="return registerEmployee()">
-            <label for="email">E-mail:</label>
-            <input type="email" id="email" name="email" required>
-            <br>
-            <label for="temporaryPassword">Tijdelijk Wachtwoord:</label>
-            <input type="password" id="temporaryPassword" name="temporaryPassword" required>
-            <br>
-            <button type="submit">Registreer Werknemer</button>
+    <div class="register-box">
+        <h2>Registreer Werknemer</h2>
+        <form id="register-form">
+            <label for="first-name">Voornaam</label>
+            <input type="text" id="first-name" required>
+
+            <label for="last-name">Achternaam</label>
+            <input type="text" id="last-name" required>
+
+            <label for="address">Adres</label>
+            <input type="text" id="address" required>
+
+            <label for="city">Stad</label>
+            <input type="text" id="city" required>
+
+            <label for="postal-code">Postcode</label>
+            <input type="text" id="postal-code" required>
+
+            <label for="email">E-mail</label>
+            <input type="email" id="email" required>
+
+            <label for="password">Wachtwoord</label>
+            <input type="password" id="password" required>
+
+            <label for="hourly-rate">Uurtarief</label>
+            <input type="number" id="hourly-rate" required>
+
+            <label for="role">Rol</label>
+            <select id="role" required>
+                <option value="employee">Werknemer</option>
+                <option value="admin">Admin</option>
+                <option value="client">Klant</option>
+            </select>
+
+            <button type="submit">Registreer</button>
         </form>
-    </main>
+    </div>
 </body>
 </html>
