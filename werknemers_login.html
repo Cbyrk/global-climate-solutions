@@ -6,7 +6,6 @@
     <title>Werknemers Login</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module">
-        // Firebase configuratie
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
@@ -21,7 +20,6 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
-        // Firebase initialiseren
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -42,6 +40,7 @@
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
                     if (userData.Role === 'Werknemer') {
+                        console.log('Gebruiker met rol Werknemer gevonden, doorverwijzen naar dashboard.');
                         window.location.href = 'werknemers_dashboard.html';
                     } else {
                         errorMessageElement.textContent = 'Geen toegang. U bent geen werknemer.';
@@ -119,7 +118,7 @@
 </head>
 <body>
     <div class="login-container">
-        <img src="https://github.com/Cbyrk/global-climate-solutions/blob/main/gcs_logo_final_enhanced_v5.jpg?raw=true" alt="GCS Logo">
+        <img src="https://github.com/Cbyrk/global-climate-solutions/blob/main/gcs_logo_final_enhanced_v5.jpg" alt="GCS Logo">
         <h1>Werknemers Login</h1>
         <form onsubmit="loginEmployee(event)">
             <label for="email">E-mail:</label>
