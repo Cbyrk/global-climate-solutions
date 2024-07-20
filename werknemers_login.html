@@ -27,6 +27,7 @@
         function loginEmployee() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const errorMessageElement = document.getElementById('error-message');
 
             auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
@@ -45,7 +46,7 @@
                 })
                 .catch((error) => {
                     console.error('Fout bij inloggen:', error);
-                    alert('Fout bij inloggen: ' + error.message);
+                    errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
                 });
 
             return false;
@@ -66,6 +67,7 @@
             <br>
             <button type="submit">Inloggen</button>
         </form>
+        <p id="error-message" style="color: red;"></p>
     </main>
 </body>
 </html>
