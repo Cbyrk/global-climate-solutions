@@ -32,9 +32,11 @@
             const password = passwordField.value;
             const errorMessageElement = document.getElementById('error-message');
 
+            // Reset borders and error message
             emailField.style.border = "";
             passwordField.style.border = "";
             errorMessageElement.style.display = "none";
+            errorMessageElement.textContent = "";
 
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
