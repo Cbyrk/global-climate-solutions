@@ -11,12 +11,13 @@
     <script>
         // Firebase configuratie
         const firebaseConfig = {
-            apiKey: "JOUW_API_KEY",
-            authDomain: "JOUW_PROJECT_ID.firebaseapp.com",
-            projectId: "JOUW_PROJECT_ID",
-            storageBucket: "JOUW_PROJECT_ID.appspot.com",
-            messagingSenderId: "JOUW_SENDER_ID",
-            appId: "JOUW_APP_ID"
+            apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
+            authDomain: "register-employee-gcs.firebaseapp.com",
+            projectId: "register-employee-gcs",
+            storageBucket: "register-employee-gcs.appspot.com",
+            messagingSenderId: "823490257683",
+            appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
+            measurementId: "G-Q68YZMSFJX"
         };
 
         // Firebase initialiseren
@@ -37,11 +38,27 @@
                         .then((doc) => {
                             if (doc.exists && doc.data().mustChangePassword) {
                                 window.location.href = 'change_password.html';
+                            } else if (doc.exists) {
+                                const role = doc.data().Role;
+                                if (role === 'Admin') {
+                                    window.location.href = 'admin_dashboard.html';
+                                } else if (role === 'Werknemer') {
+                                    window.location.href = 'werknemer_dashboard.html';
+                                } else if (role === 'Klant') {
+                                    window.location.href = 'klant_dashboard.html';
+                                } else {
+                                    errorMessageElement.textContent = 'Onbekende rol. Neem contact op met de beheerder.';
+                                    errorMessageElement.style.display = 'block';
+                                }
                             } else {
-                                alert('Login succesvol!');
-                                // Redirect naar beschermde pagina
-                                window.location.href = 'protected_page.html';
+                                errorMessageElement.textContent = 'Geen gebruikersgegevens gevonden. Neem contact op met de beheerder.';
+                                errorMessageElement.style.display = 'block';
                             }
+                        })
+                        .catch((error) => {
+                            console.error('Fout bij het ophalen van gebruikersgegevens:', error);
+                            errorMessageElement.textContent = 'Fout bij het ophalen van gebruikersgegevens. Probeer het opnieuw.';
+                            errorMessageElement.style.display = 'block';
                         });
                 })
                 .catch((error) => {
