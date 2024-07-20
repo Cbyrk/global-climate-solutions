@@ -5,57 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registreer Werknemer</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-    <script>
-        // Firebase configuratie
+    <script type="module">
+        // Firebase configuratie importeren
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
         const firebaseConfig = {
-            apiKey: "JOUW_API_KEY",
-            authDomain: "JOUW_PROJECT_ID.firebaseapp.com",
-            projectId: "JOUW_PROJECT_ID",
-            storageBucket: "JOUW_PROJECT_ID.appspot.com",
-            messagingSenderId: "JOUW_SENDER_ID",
-            appId: "JOUW_APP_ID"
+            apiKey: "AIzaSyBxwBT0Rs_GBgXfT223N1zzSGZW07f2r7A",
+            authDomain: "werknemers-gcs.firebaseapp.com",
+            projectId: "werknemers-gcs",
+            storageBucket: "werknemers-gcs.appspot.com",
+            messagingSenderId: "1029690788615",
+            appId: "1:1029690788615:web:b52c8e98e9ae881fe6dae2",
+            measurementId: "G-1XZCJ3MTK4"
         };
 
         // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore(app);
 
         // Functie voor werknemer registratie
-        document.getElementById('register-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const firstName = document.getElementById('first-name').value;
-            const lastName = document.getElementById('last-name').value;
-            const address = document.getElementById('address').value;
-            const city = document.getElementById('city').value;
-            const postalCode = document.getElementById('postal-code').value;
-            const hourlyRate = document.getElementById('hourly-rate').value;
-            const role = document.getElementById('role').value;
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('register-form').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const firstName = document.getElementById('first-name').value;
+                const lastName = document.getElementById('last-name').value;
+                const address = document.getElementById('address').value;
+                const city = document.getElementById('city').value;
+                const postalCode = document.getElementById('postal-code').value;
+                const hourlyRate = document.getElementById('hourly-rate').value;
+                const role = document.getElementById('role').value;
 
-            auth.createUserWithEmailAndPassword(email, password).then((userCredential) => {
-                const user = userCredential.user;
-                return db.collection('employees').doc(user.uid).set({
-                    email: email,
-                    firstName: firstName,
-                    lastName: lastName,
-                    address: address,
-                    city: city,
-                    postalCode: postalCode,
-                    hourlyRate: hourlyRate,
-                    role: role,
-                    mustChangePassword: true
-                });
-            }).then(() => {
-                alert('Werknemer succesvol geregistreerd');
-                document.getElementById('register-form').reset();
-            }).catch((error) => {
-                console.error('Fout bij registratie:', error);
-                alert('Er is een fout opgetreden bij de registratie: ' + error.message);
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    await setDoc(doc(db, 'employees', user.uid), {
+                        email: email,
+                        firstName: firstName,
+                        lastName: lastName,
+                        address: address,
+                        city: city,
+                        postalCode: postalCode,
+                        hourlyRate: hourlyRate,
+                        role: role,
+                        mustChangePassword: true
+                    });
+                    alert('Werknemer succesvol geregistreerd');
+                    document.getElementById('register-form').reset();
+                } catch (error) {
+                    console.error('Fout bij registratie:', error);
+                    alert('Er is een fout opgetreden bij de registratie: ' + error.message);
+                }
             });
         });
     </script>
