@@ -7,9 +7,9 @@
     <link rel="stylesheet" href="styles.css">
     <script type="module">
         // Firebase configuratie
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
@@ -26,7 +26,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Functie voor inloggen en doorverwijzen
         async function loginEmployee(event) {
             event.preventDefault();
             const email = document.getElementById('email').value;
@@ -36,26 +35,20 @@
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-                console.log('Gebruiker ingelogd:', user);
 
-                const userDoc = await getDoc(doc(db, 'employees', user.uid));
+                const userDocRef = doc(db, 'employees', user.uid);
+                const userDoc = await getDoc(userDocRef);
+
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    console.log('Gebruikersgegevens:', userData);
-                    if (userData.Role === 'Admin') {
-                        window.location.href = 'admin_dashboard.html';
-                    } else if (userData.Role === 'Werknemer') {
+                    if (userData.Role === 'Werknemer') {
                         window.location.href = 'werknemers_dashboard.html';
-                    } else if (userData.Role === 'Klant') {
-                        window.location.href = 'klant_dashboard.html';
                     } else {
-                        console.error('Onbekende rol:', userData.Role);
-                        errorMessageElement.textContent = 'Onbekende rol voor deze gebruiker.';
+                        errorMessageElement.textContent = 'Geen toegang. U bent geen werknemer.';
                         errorMessageElement.style.display = 'block';
                     }
                 } else {
-                    console.error('Geen gegevens gevonden voor deze gebruiker.');
-                    errorMessageElement.textContent = 'Geen gegevens gevonden voor deze gebruiker.';
+                    errorMessageElement.textContent = 'Gebruikersgegevens niet gevonden.';
                     errorMessageElement.style.display = 'block';
                 }
             } catch (error) {
