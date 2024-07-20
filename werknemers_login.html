@@ -35,17 +35,19 @@
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
+                console.log('Gebruiker ingelogd:', user);
 
                 const userDoc = await getDoc(doc(db, 'employees', user.uid));
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
+                    console.log('Gebruikersgegevens:', userData);
                     if (userData.role === 'Admin') {
                         window.location.href = 'admin_dashboard.html';
                     } else {
                         window.location.href = 'werknemers_dashboard.html';
                     }
                 } else {
-                    console.error('No such document!');
+                    console.error('Geen gegevens gevonden voor deze gebruiker.');
                     errorMessageElement.textContent = 'Geen gegevens gevonden voor deze gebruiker.';
                     errorMessageElement.style.display = 'block';
                 }
@@ -117,7 +119,7 @@
 </head>
 <body>
     <div class="login-container">
-        <img src="https://github.com/Cbyrk/global-climate-solutions/blob/main/gcs_logo_final_enhanced_v5.jpg?raw=true" alt="GCS Logo">
+        <img src="https://github.com/USERNAME/REPOSITORY_NAME/blob/BRANCH_NAME/path/to/gcs_logo_final_cleaned_v5.png?raw=true" alt="GCS Logo">
         <h1>Werknemers Login</h1>
         <form onsubmit="loginEmployee(event)">
             <label for="email">E-mail:</label>
