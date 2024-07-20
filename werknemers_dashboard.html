@@ -103,7 +103,6 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            position: relative;
         }
         .dashboard-box h2 {
             margin-top: 0;
@@ -133,17 +132,19 @@
         }
         .dashboard-box meter {
             width: 100%;
-            height: 30px;
         }
         .dashboard-box .actions {
             display: flex;
             justify-content: space-between;
             margin-top: 10px;
         }
-        .progress-container {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #4CAF50;
+            font-size: 16px;
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -151,12 +152,9 @@
     <div class="dashboard-box" id="earnings-box">
         <h2>Verdiensten</h2>
         <p>Totale uren deze week: <span id="total-hours">0</span></p>
-        <p>Verdiend bedrag: €<span id="total-earnings">0</span></p>
+        <p>Verdiend bedrag: <span id="total-earnings">€0</span> <button class="icon-button" onclick="toggleVisibility('total-earnings')">&#128065;</button></p>
+        <p>Uurtarief: <span id="hourly-rate">€20</span> <button class="icon-button" onclick="toggleVisibility('hourly-rate')">&#128065;</button></p>
         <div>
-            <label for="hourly-rate">Uurtarief:</label>
-            <input type="number" id="hourly-rate" value="20">
-        </div>
-        <div class="progress-container">
             <label for="week-progress">Werkweek voortgang:</label>
             <meter id="week-progress" value="0" min="0" max="40"></meter>
         </div>
@@ -214,140 +212,18 @@
         function nextWeek() {
             alert('Volgende Week - Functie nog niet geïmplementeerd');
         }
+
+        function toggleVisibility(id) {
+            const elem = document.getElementById(id);
+            const button = elem.nextElementSibling;
+            if (elem.style.display === 'none') {
+                elem.style.display = 'inline';
+                button.innerHTML = '&#128065;';
+            } else {
+                elem.style.display = 'none';
+                button.innerHTML = '&#128064;';
+            }
+        }
     </script>
 </body>
 </html>
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Werknemers Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-    <script>
-        // Firebase configuratie
-        const firebaseConfig = {
-            apiKey: "JOUW_API_KEY",
-            authDomain: "JOUW_PROJECT_ID.firebaseapp.com",
-            projectId: "JOUW_PROJECT_ID",
-            storageBucket: "JOUW_PROJECT_ID.appspot.com",
-            messagingSenderId: "JOUW_SENDER_ID",
-            appId: "JOUW_APP_ID"
-        };
-
-        // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // Controleer of gebruiker is ingelogd
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                console.log('Gebruiker ingelogd:', user);
-                loadUserData(user);
-            } else {
-                console.log('Geen gebruiker ingelogd.');
-                window.location.href = 'werknemers_login.html';
-            }
-        });
-
-        function loadUserData(user) {
-            const userId = user.uid;
-            db.collection('employees').doc(userId).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        document.getElementById('hourly-rate').textContent = data.hourlyRate;
-                    } else {
-                        console.error('Geen gegevens gevonden voor deze gebruiker.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Fout bij het ophalen van gebruikersgegevens:', error);
-                });
-        }
-
-        // Functie voor urenregistratie
-        document.getElementById('hours-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (user) {
-                const day = document.getElementById('day').value;
-                const startTime = document.getElementById('start-time').value;
-                const endTime = document.getElementById('end-time').value;
-                const breakTime = document.getElementById('break-time').value;
-                const hoursWorked = calculateHours(startTime, endTime, breakTime);
-                const hourlyRate = parseFloat(document.getElementById('hourly-rate').textContent);
-                const totalEarnings = hoursWorked * hourlyRate;
-
-                db.collection('hours').add({
-                    userId: user.uid,
-                    day: day,
-                    startTime: startTime,
-                    endTime: endTime,
-                    breakTime: breakTime,
-                    hoursWorked: hoursWorked,
-                    totalEarnings: totalEarnings
-                })
-                .then(() => {
-                    alert('Uren succesvol geregistreerd');
-                    document.getElementById('hours-form').reset();
-                    updateDashboard(user.uid);
-                })
-                .catch((error) => {
-                    console.error('Fout bij het registreren van uren:', error);
-                    alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
-                });
-            } else {
-                alert('Je moet ingelogd zijn om uren te registreren.');
-            }
-        });
-
-        // Functie om gewerkte uren te berekenen
-        function calculateHours(startTime, endTime, breakTime) {
-            const start = new Date(`1970-01-01T${startTime}Z`);
-            const end = new Date(`1970-01-01T${endTime}Z`);
-            const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
-            const breakHours = breakTime / 60; // pauzetijd in uren
-            return diff - breakHours;
-        }
-
-        function updateDashboard(userId) {
-            // Update het dashboard met de nieuwste gegevens
-            db.collection('hours').where('userId', '==', userId).get()
-                .then(querySnapshot => {
-                    let totalHours = 0;
-                    let totalEarnings = 0;
-
-                    querySnapshot.forEach(doc => {
-                        const data = doc.data();
-                        totalHours += data.hoursWorked;
-                        totalEarnings += data.totalEarnings;
-                    });
-
-                    document.getElementById('total-hours').textContent = totalHours;
-                    document.getElementById('total-earnings').textContent = `€${totalEarnings.toFixed(2)}`;
-                    document.getElementById('week-progress').value = totalHours;
-                })
-                .catch(error => {
-                    console.error('Fout bij het updaten van het dashboard:', error);
-                });
-        }
-    </script>
-</head>
-<body>
-    <div class="dashboard-box" id="earnings-box">
-        <h2>Verdiensten</h2>
-        <p>Totale uren deze week: <span id="total-hours">0</span></p>
-        <p>Verdiend bedrag: <span id="total-earnings">€0</span></p>
-        <p>Uurtarief: €<span id="hourly-rate"></span></p>
-        <div>
-            <label for="week-progress">Werkweek voortgang:</label>
-            <meter id="week-progress" value="0" min="0" max="40"></meter>
-        </div>
-    </div>
-
-    <div class="dashboard-box" id="hours-register-box">
