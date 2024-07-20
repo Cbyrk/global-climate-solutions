@@ -111,14 +111,17 @@
         }
         .login-container #error-message {
             display: none;
-            color: red;
+            color: white;
+            background-color: red;
+            padding: 10px;
+            border-radius: 5px;
             margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <img src="https://github.com/Cbyrk/global-climate-solutions/blob/main/gcs_logo_final_enhanced_v5.jpg?raw=true" alt="GCS Logo">
+        <img src="https://github.com/Cbyrk/global-climate-solutions/blob/main/gcs_logo_final_enhanced_v5.jpg" alt="GCS Logo">
         <h1>Werknemers Login</h1>
         <form onsubmit="loginEmployee(event)">
             <label for="email">E-mail:</label>
