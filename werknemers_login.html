@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Login</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
-    <script>
+    <script type="module">
         // Firebase configuratie
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,12 +22,12 @@
         };
 
         // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore();
 
-        function loginEmployee(event) {
-            event.preventDefault();  // Voeg deze regel toe om de pagina niet te laten verversen
+        async function loginEmployee(event) {
+            event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
@@ -34,40 +35,33 @@
             document.getElementById('email').style.borderColor = '';
             document.getElementById('password').style.borderColor = '';
 
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    db.collection('employees').doc(user.uid).get()
-                        .then((doc) => {
-                            if (doc.exists) {
-                                const data = doc.data();
-                                if (data.Role === 'Werknemer') {
-                                    window.location.href = 'werknemers_dashboard.html';
-                                } else if (data.Role === 'Admin') {
-                                    window.location.href = 'admin_dashboard.html';
-                                } else {
-                                    alert('Onbekende rol, neem contact op met de beheerder.');
-                                }
-                            } else {
-                                alert('Gebruikersgegevens niet gevonden.');
-                            }
-                        })
-                        .catch((error) => {
-                            console.error('Fout bij ophalen gebruikersgegevens:', error);
-                        });
-                })
-                .catch((error) => {
-                    const errorCode = error.code;
-                    const errorMessage = error.message;
-                    if (errorCode === 'auth/user-not-found') {
-                        document.getElementById('email').style.borderColor = 'red';
-                    } else if (errorCode === 'auth/wrong-password') {
-                        document.getElementById('password').style.borderColor = 'red';
-                    }
-                    console.error('Fout bij inloggen:', errorMessage);
-                });
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                const docRef = doc(db, 'employees', user.uid);
+                const docSnap = await getDoc(docRef);
 
-            return false;
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.Role === 'Werknemer') {
+                        window.location.href = 'werknemers_dashboard.html';
+                    } else if (data.Role === 'Admin') {
+                        window.location.href = 'admin_dashboard.html';
+                    } else {
+                        alert('Onbekende rol, neem contact op met de beheerder.');
+                    }
+                } else {
+                    alert('Gebruikersgegevens niet gevonden.');
+                }
+            } catch (error) {
+                const errorCode = error.code;
+                if (errorCode === 'auth/user-not-found') {
+                    document.getElementById('email').style.borderColor = 'red';
+                } else if (errorCode === 'auth/wrong-password') {
+                    document.getElementById('password').style.borderColor = 'red';
+                }
+                console.error('Fout bij inloggen:', error.message);
+            }
         }
     </script>
     <style>
