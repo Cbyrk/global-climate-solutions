@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <script>
+        // Firebase configuratie
+        const firebaseConfig = {
+            apiKey: "JOUW_API_KEY",
+            authDomain: "JOUW_PROJECT_ID.firebaseapp.com",
+            projectId: "JOUW_PROJECT_ID",
+            storageBucket: "JOUW_PROJECT_ID.appspot.com",
+            messagingSenderId: "JOUW_SENDER_ID",
+            appId: "JOUW_APP_ID"
+        };
+
+        // Firebase initialiseren
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Controleer of gebruiker is ingelogd en admin
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Hier kan je extra controles doen om te verifiëren of de gebruiker een admin is
+                console.log('Admin ingelogd:', user);
+                // Haal gegevens op voor de ingelogde admin
+                loadEmployees();
+            } else {
+                console.log('Geen admin ingelogd.');
+                window.location.href = 'admin_login.html';
+            }
+        });
+
+        // Functie om werknemersgegevens op te halen
+        function loadEmployees() {
+            db.collection('employees').get().then((snapshot) => {
+                snapshot.forEach((doc) => {
+                    let data = doc.data();
+                    let employeeItem = document.createElement('div');
+                    employeeItem.innerHTML = `
+                        <p>Naam: ${data.firstName} ${data.lastName}</p>
+                        <p>Email: ${data.email}</p>
+                        <button onclick="viewEmployee('${doc.id}')">Bekijk Dashboard</button>
+                    `;
+                    document.getElementById('employee-list').appendChild(employeeItem);
+                });
+            });
+        }
+
+        function viewEmployee(employeeId) {
+            // Code om door te gaan naar de specifieke werknemer's dashboard
+            window.location.href = `employee_dashboard.html?id=${employeeId}`;
+        }
+
+        window.onload = loadEmployees;
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+        .dashboard-box {
+            background-color: #2c2c2c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .dashboard-box h2 {
+            margin-top: 0;
+            color: #d4d4d4;
+        }
+        .dashboard-box p, .dashboard-box label {
+            color: #d4d4d4;
+        }
+        .dashboard-box input, .dashboard-box button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+        }
+        .dashboard-box button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        .dashboard-box button:hover {
+            background-color: #45a049;
+        }
+        .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"] {
+            background-color: #3a3a3a;
+            color: white;
+        }
+        .dashboard-box meter {
+            width: 100%;
+        }
+        .dashboard-box .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-box" id="employee-list-box">
+        <h2>Werknemers</h2>
+        <div id="employee-list"></div>
+    </div>
+
+    <div class="dashboard-box" id="hours-summary-box">
+        <h2>Geregistreerde Uren (Week)</h2>
+        <div id="employee-hours-summary"></div>
+    </div>
+
+    <div class="dashboard-box" id="employee-dashboard-box">
+        <h2>Werknemer Dashboard</h2>
+        <div id="employee-dashboard"></div>
+    </div>
+
+    <div class="dashboard-box" id="employee-agenda-box">
+        <h2>Werk Agenda</h2>
+        <div id="employee-calendar"></div>
+    </div>
+</body>
+</html>
