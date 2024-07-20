@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Login</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="module">
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+    <script>
         // Firebase configuratie
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
-
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -22,46 +21,44 @@
         };
 
         // Firebase initialiseren
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
-        const db = getFirestore();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        async function loginEmployee(event) {
+        function loginEmployee(event) {
             event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
-            // Reset randen
-            document.getElementById('email').style.borderColor = '';
-            document.getElementById('password').style.borderColor = '';
-
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-                const docRef = doc(db, 'employees', user.uid);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.Role === 'Werknemer') {
-                        window.location.href = 'werknemers_dashboard.html';
-                    } else if (data.Role === 'Admin') {
-                        window.location.href = 'admin_dashboard.html';
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    db.collection('employees').doc(user.uid).get()
+                        .then((doc) => {
+                            if (doc.exists) {
+                                const role = doc.data().Role;
+                                if (role === 'Werknemer') {
+                                    window.location.href = 'werknemers_dashboard.html';
+                                } else if (role === 'Admin') {
+                                    window.location.href = 'admin_dashboard.html';
+                                } else {
+                                    alert('Ongeldige rol. Neem contact op met de beheerder.');
+                                }
+                            } else {
+                                alert('Gebruikersgegevens niet gevonden.');
+                            }
+                        });
+                })
+                .catch((error) => {
+                    console.error('Fout bij inloggen:', error);
+                    if (error.code === 'auth/wrong-password') {
+                        document.getElementById('password').style.borderColor = 'red';
+                    } else if (error.code === 'auth/user-not-found') {
+                        document.getElementById('email').style.borderColor = 'red';
                     } else {
-                        alert('Onbekende rol, neem contact op met de beheerder.');
+                        alert('Fout bij inloggen: ' + error.message);
                     }
-                } else {
-                    alert('Gebruikersgegevens niet gevonden.');
-                }
-            } catch (error) {
-                const errorCode = error.code;
-                if (errorCode === 'auth/user-not-found') {
-                    document.getElementById('email').style.borderColor = 'red';
-                } else if (errorCode === 'auth/wrong-password') {
-                    document.getElementById('password').style.borderColor = 'red';
-                }
-                console.error('Fout bij inloggen:', error.message);
-            }
+                });
         }
     </script>
     <style>
@@ -104,9 +101,6 @@
             border: none;
             border-radius: 5px;
         }
-        .login-container input:focus {
-            outline: none;
-        }
         .login-container button {
             width: 100%;
             padding: 10px;
@@ -119,10 +113,12 @@
         .login-container button:hover {
             background-color: darkgreen;
         }
-        .login-container #error-message {
-            display: none;
-            color: red;
-            margin-top: 10px;
+        .login-container input[type="email"], .login-container input[type="password"] {
+            background-color: #3a3a3a;
+            color: white;
+        }
+        .login-container input[type="email"].error, .login-container input[type="password"].error {
+            border-color: red;
         }
     </style>
 </head>
@@ -130,14 +126,13 @@
     <div class="login-container">
         <img src="https://github.com/Cbyrk/global-climate-solutions/blob/main/gcs_logo_final_enhanced_v5.jpg?raw=true" alt="GCS Logo">
         <h1>Werknemers Login</h1>
-        <form onsubmit="return loginEmployee(event)">
+        <form onsubmit="loginEmployee(event)">
             <label for="email">E-mail:</label>
             <input type="email" id="email" name="email" required>
             <label for="password">Wachtwoord:</label>
             <input type="password" id="password" name="password" required>
             <button type="submit">Inloggen</button>
         </form>
-        <p id="error-message"></p>
     </div>
 </body>
 </html>
