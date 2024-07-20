@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Werknemers Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <script>
+        // Firebase configuratie
+        const firebaseConfig = {
+            apiKey: "JOUW_API_KEY",
+            authDomain: "JOUW_PROJECT_ID.firebaseapp.com",
+            projectId: "JOUW_PROJECT_ID",
+            storageBucket: "JOUW_PROJECT_ID.appspot.com",
+            messagingSenderId: "JOUW_SENDER_ID",
+            appId: "JOUW_APP_ID"
+        };
+
+        // Firebase initialiseren
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+        .dashboard-box {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+        .dashboard-box h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-box" id="earnings-box">
+        <h2>Verdiensten</h2>
+        <p>Totale uren deze week: <span id="total-hours">0</span></p>
+        <p>Verdiend bedrag: €<span id="total-earnings">0</span></p>
+        <div>
+            <label for="hourly-rate">Uurtarief:</label>
+            <input type="number" id="hourly-rate" value="20">
+        </div>
+        <div>
+            <label for="week-progress">Werkweek voortgang:</label>
+            <meter id="week-progress" value="0" min="0" max="40"></meter>
+        </div>
+    </div>
+
+    <div class="dashboard-box" id="hours-register-box">
+        <h2>Uren Registreren</h2>
+        <form id="hours-form">
+            <div>
+                <label for="day">Dag:</label>
+                <input type="date" id="day" required>
+            </div>
+            <div>
+                <label for="start-time">Starttijd:</label>
+                <input type="time" id="start-time" required>
+            </div>
+            <div>
+                <label for="end-time">Eindtijd:</label>
+                <input type="time" id="end-time" required>
+            </div>
+            <div>
+                <label for="break-time">Pauzetijd (minuten):</label>
+                <input type="number" id="break-time" min="0" value="0">
+            </div>
+            <button type="submit">Uren Registreren</button>
+        </form>
+    </div>
+
+    <div class="dashboard-box" id="hours-logged-box">
+        <h2>Geregistreerde Uren</h2>
+        <div id="hours-logged"></div>
+        <button onclick="previousWeek()">Vorige Week</button>
+        <button onclick="nextWeek()">Volgende Week</button>
+    </div>
+
+    <div class="dashboard-box" id="agenda-box">
+        <h2>Werk Agenda</h2>
+        <div id="calendar"></div>
+        <button onclick="addEvent()">Event Toevoegen</button>
+    </div>
+
+    <script>
+        // Placeholder functie voor agenda
+        function addEvent() {
+            alert('Event Toevoegen - Functie nog niet geïmplementeerd');
+        }
+
+        // Placeholder functie voor week navigatie
+        function previousWeek() {
+            alert('Vorige Week - Functie nog niet geïmplementeerd');
+        }
+
+        function nextWeek() {
+            alert('Volgende Week - Functie nog niet geïmplementeerd');
+        }
+
+        // Functie voor urenregistratie
+        document.getElementById('hours-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Uren registratie logica hier
+        });
+
+        // Placeholder voor Firestore gegevens ophalen en verwerken
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Haal gegevens op voor de ingelogde werknemer
+            } else {
+                window.location.href = 'werknemers_login.html';
+            }
+        });
+    </script>
+</body>
+</html>
