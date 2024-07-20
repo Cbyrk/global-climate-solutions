@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Employee</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Register Employee</h1>
+    <form id="register-form">
+        <label for="firstName">First Name:</label>
+        <input type="text" id="firstName" name="firstName" required>
+        <br>
+        <label for="lastName">Last Name:</label>
+        <input type="text" id="lastName" name="lastName" required>
+        <br>
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required>
+        <br>
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required>
+        <br>
+        <label for="postalCode">Postal Code:</label>
+        <input type="text" id="postalCode" name="postalCode" required>
+        <br>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <br>
+        <label for="hourlyRate">Hourly Rate:</label>
+        <input type="number" id="hourlyRate" name="hourlyRate" required>
+        <br>
+        <label for="role">Role:</label>
+        <select id="role" name="role">
+            <option value="Employee">Employee</option>
+            <option value="Admin">Admin</option>
+        </select>
+        <br>
+        <button type="submit">Register</button>
+    </form>
+    <!-- Firebase configuration scripts -->
+    <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
+        authDomain: "register-employee-gcs.firebaseapp.com",
+        projectId: "register-employee-gcs",
+        storageBucket: "register-employee-gcs.appspot.com",
+        messagingSenderId: "823490257683",
+        appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
+        measurementId: "G-Q68YZMSFJX"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      const analytics = firebase.analytics();
+
+      // Register Employee
+      document.getElementById('register-form').addEventListener('submit', function(event) {
+          event.preventDefault();
+
+          const firstName = event.target.firstName.value;
+          const lastName = event.target.lastName.value;
+          const address = event.target.address.value;
+          const city = event.target.city.value;
+          const postalCode = event.target.postalCode.value;
+          const email = event.target.email.value;
+          const password = event.target.password.value;
+          const hourlyRate = event.target.hourlyRate.value;
+          const role = event.target.role.value;
+
+          auth.createUserWithEmailAndPassword(email, password)
+              .then(userCredential => {
+                  const user = userCredential.user;
+                  return db.collection('employees').doc(user.uid).set({
+                      firstName: firstName,
+                      lastName: lastName,
+                      address: address,
+                      city: city,
+                      postalCode: postalCode,
+                      email: email,
+                      hourlyRate: hourlyRate,
+                      role: role,
+                      userId: user.uid
+                  });
+              })
+              .then(() => {
+                  alert('Employee registered successfully!');
+                  document.getElementById('register-form').reset();
+              })
+              .catch(error => {
+                  console.error('Error registering employee:', error);
+                  alert('Error registering employee: ' + error.message);
+              });
+      });
+    </script>
+</body>
+</html>
