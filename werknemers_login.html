@@ -47,6 +47,7 @@
                 .catch((error) => {
                     console.error('Fout bij inloggen:', error);
                     errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
+                    errorMessageElement.style.display = 'block';
                 });
 
             return false;
@@ -68,6 +69,7 @@
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             text-align: center;
+            width: 300px;
         }
         .login-container img {
             width: 100px;
@@ -85,7 +87,7 @@
             margin-bottom: 5px;
         }
         .login-container input {
-            width: 100%;
+            width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
             border: none;
@@ -104,6 +106,7 @@
             background-color: darkgreen;
         }
         .login-container #error-message {
+            display: none;
             color: red;
             margin-top: 10px;
         }
