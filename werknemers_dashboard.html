@@ -6,11 +6,12 @@
     <title>Werknemers Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module">
-        // Firebase configuratie
+        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,28 +22,29 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
-        // Firebase initialiseren
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         // Controleer of gebruiker is ingelogd
-        onAuthStateChanged(auth, user => {
+        onAuthStateChanged(auth, (user) => {
             if (user) {
                 console.log('Gebruiker ingelogd:', user);
                 // Haal gegevens op voor de ingelogde werknemer
                 const userDocRef = doc(db, 'employees', user.uid);
-                getDoc(userDocRef).then(docSnap => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        document.getElementById('total-hours').textContent = data.totalHours || 0;
-                        document.getElementById('total-earnings').textContent = `€${data.totalEarnings || 0}`;
-                        document.getElementById('hourly-rate').textContent = `€${data.hourlyRate || 0}`;
-                        document.getElementById('week-progress').value = data.weekProgress || 0;
-                    } else {
-                        console.log('Geen gegevens gevonden voor deze gebruiker');
-                    }
-                });
+                getDoc(userDocRef)
+                    .then((docSnapshot) => {
+                        if (docSnapshot.exists()) {
+                            const data = docSnapshot.data();
+                            document.getElementById('total-hours').textContent = data.totalHours || 0;
+                            document.getElementById('total-earnings').textContent = `€${data.totalEarnings || 0}`;
+                            document.getElementById('hourly-rate').textContent = `€${data.hourlyRate || 0}`;
+                            document.getElementById('week-progress').value = data.weekProgress || 0;
+                        } else {
+                            console.log('Geen gegevens gevonden voor deze gebruiker');
+                        }
+                    });
             } else {
                 console.log('Geen gebruiker ingelogd.');
                 window.location.href = 'werknemers_login.html';
@@ -74,4 +76,142 @@
                     document.getElementById('hours-form').reset();
                 })
                 .catch((error) => {
-                    console.error('Fout bij het registreren
+                    console.error('Fout bij het registreren van uren:', error);
+                    alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
+                });
+            } else {
+                alert('Je moet ingelogd zijn om uren te registreren.');
+            }
+        });
+
+        // Functie om gewerkte uren te berekenen
+        function calculateHours(startTime, endTime, breakTime) {
+            const start = new Date(`1970-01-01T${startTime}Z`);
+            const end = new Date(`1970-01-01T${endTime}Z`);
+            const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
+            const breakHours = breakTime / 60; // pauzetijd in uren
+            return diff - breakHours;
+        }
+
+        // Functie om zichtbaarheid te togglen
+        function toggleVisibility(id) {
+            const elem = document.getElementById(id);
+            const button = elem.nextElementSibling;
+            if (elem.style.display === 'none') {
+                elem.style.display = 'inline';
+                button.innerHTML = '&#128065;';
+            } else {
+                elem.style.display = 'none';
+                button.innerHTML = '&#128064;';
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+        .dashboard-box {
+            background-color: #2c2c2c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .dashboard-box h2 {
+            margin-top: 0;
+            color: #d4d4d4;
+        }
+        .dashboard-box p, .dashboard-box label {
+            color: #d4d4d4;
+        }
+        .dashboard-box input, .dashboard-box button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+        }
+        .dashboard-box button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        .dashboard-box button:hover {
+            background-color: #45a049;
+        }
+        .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"] {
+            background-color: #3a3a3a;
+            color: white;
+        }
+        .dashboard-box meter {
+            width: 100%;
+        }
+        .dashboard-box .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #4CAF50;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-box" id="earnings-box">
+        <h2>Verdiensten</h2>
+        <p>Totale uren deze week: <span id="total-hours">0</span></p>
+        <p>Verdiend bedrag: <span id="total-earnings">€0</span> <button class="icon-button" onclick="toggleVisibility('total-earnings')">&#128065;</button></p>
+        <p>Uurtarief: <span id="hourly-rate">€20</span> <button class="icon-button" onclick="toggleVisibility('hourly-rate')">&#128065;</button></p>
+        <div>
+            <label for="week-progress">Werkweek voortgang:</label>
+            <meter id="week-progress" value="0" min="0" max="40"></meter>
+        </div>
+    </div>
+
+    <div class="dashboard-box" id="hours-register-box">
+        <h2>Uren Registreren</h2>
+        <form id="hours-form">
+            <div>
+                <label for="day">Dag:</label>
+                <input type="date" id="day" required>
+            </div>
+            <div>
+                <label for="start-time">Starttijd:</label>
+                <input type="time" id="start-time" required>
+            </div>
+            <div>
+                <label for="end-time">Eindtijd:</label>
+                <input type="time" id="end-time" required>
+            </div>
+            <div>
+                <label for="break-time">Pauzetijd (minuten):</label>
+                <input type="number" id="break-time" min="0" value="0">
+            </div>
+            <button type="submit">Uren Registreren</button>
+        </form>
+    </div>
+
+    <div class="dashboard-box" id="hours-logged-box">
+        <h2>Geregistreerde Uren</h2>
+        <div id="hours-logged"></div>
+        <div class="actions">
+            <button onclick="previousWeek()">Vorige Week</button>
+            <button onclick="nextWeek()">Volgende Week</button>
+        </div>
+    </div>
+
+    <div class="dashboard-box" id="agenda-box">
+        <h2>Werk Agenda</h2>
+        <div id="calendar
