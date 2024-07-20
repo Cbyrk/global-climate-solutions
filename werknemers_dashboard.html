@@ -23,6 +23,85 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+
+        function loginEmployee() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessageElement = document.getElementById('error-message');
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+
+                    db.collection('employees').doc(user.uid).get()
+                        .then((doc) => {
+                            if (doc.exists && doc.data().mustChangePassword) {
+                                window.location.href = 'change_password.html';
+                            } else {
+                                alert('Login succesvol!');
+                                // Redirect naar beschermde pagina
+                                window.location.href = 'protected_page.html';
+                            }
+                        });
+                })
+                .catch((error) => {
+                    console.error('Fout bij inloggen:', error);
+                    errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
+                    errorMessageElement.style.display = 'block';
+                });
+
+            return false;
+        }
+
+        // Functie voor urenregistratie
+        document.getElementById('hours-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (user) {
+                const day = document.getElementById('day').value;
+                const startTime = document.getElementById('start-time').value;
+                const endTime = document.getElementById('end-time').value;
+                const breakTime = document.getElementById('break-time').value;
+                const hoursWorked = calculateHours(startTime, endTime, breakTime);
+
+                db.collection('hours').add({
+                    userId: user.uid,
+                    day: day,
+                    startTime: startTime,
+                    endTime: endTime,
+                    breakTime: breakTime,
+                    hoursWorked: hoursWorked
+                })
+                .then(() => {
+                    alert('Uren succesvol geregistreerd');
+                    document.getElementById('hours-form').reset();
+                })
+                .catch((error) => {
+                    console.error('Fout bij het registreren van uren:', error);
+                    alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
+                });
+            } else {
+                alert('Je moet ingelogd zijn om uren te registreren.');
+            }
+        });
+
+        // Functie om gewerkte uren te berekenen
+        function calculateHours(startTime, endTime, breakTime) {
+            const start = new Date(`1970-01-01T${startTime}Z`);
+            const end = new Date(`1970-01-01T${endTime}Z`);
+            const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
+            const breakHours = breakTime / 60; // pauzetijd in uren
+            return diff - breakHours;
+        }
+
+        // Placeholder voor Firestore gegevens ophalen en verwerken
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // Haal gegevens op voor de ingelogde werknemer
+            } else {
+                window.location.href = 'werknemers_login.html';
+            }
+        });
     </script>
     <style>
         body {
@@ -112,21 +191,6 @@
         function nextWeek() {
             alert('Volgende Week - Functie nog niet geïmplementeerd');
         }
-
-        // Functie voor urenregistratie
-        document.getElementById('hours-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            // Uren registratie logica hier
-        });
-
-        // Placeholder voor Firestore gegevens ophalen en verwerken
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                // Haal gegevens op voor de ingelogde werknemer
-            } else {
-                window.location.href = 'werknemers_login.html';
-            }
-        });
     </script>
 </body>
 </html>
