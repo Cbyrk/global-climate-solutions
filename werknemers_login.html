@@ -26,9 +26,15 @@
 
         async function loginEmployee(event) {
             event.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const emailField = document.getElementById('email');
+            const passwordField = document.getElementById('password');
+            const email = emailField.value;
+            const password = passwordField.value;
             const errorMessageElement = document.getElementById('error-message');
+
+            emailField.style.border = "";
+            passwordField.style.border = "";
+            errorMessageElement.style.display = "none";
 
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -52,7 +58,15 @@
                 }
             } catch (error) {
                 console.error('Fout bij inloggen:', error);
-                errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
+                if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found') {
+                    emailField.style.border = "2px solid red";
+                    errorMessageElement.textContent = 'Onjuist e-mailadres. Probeer het opnieuw.';
+                } else if (error.code === 'auth/wrong-password') {
+                    passwordField.style.border = "2px solid red";
+                    errorMessageElement.textContent = 'Onjuist wachtwoord. Probeer het opnieuw.';
+                } else {
+                    errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
+                }
                 errorMessageElement.style.display = 'block';
             }
         }
