@@ -5,18 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
     <script>
         // Firebase configuratie
         const firebaseConfig = {
-            apiKey: "JOUW_API_KEY",
-            authDomain: "JOUW_PROJECT_ID.firebaseapp.com",
-            projectId: "JOUW_PROJECT_ID",
-            storageBucket: "JOUW_PROJECT_ID.appspot.com",
-            messagingSenderId: "JOUW_SENDER_ID",
-            appId: "JOUW_APP_ID"
+            apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
+            authDomain: "register-employee-gcs.firebaseapp.com",
+            projectId: "register-employee-gcs",
+            storageBucket: "register-employee-gcs.appspot.com",
+            messagingSenderId: "823490257683",
+            appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
+            measurementId: "G-Q68YZMSFJX"
         };
 
         // Firebase initialiseren
@@ -27,13 +28,18 @@
         // Controleer of gebruiker is ingelogd en admin
         auth.onAuthStateChanged(user => {
             if (user) {
-                // Hier kan je extra controles doen om te verifiëren of de gebruiker een admin is
-                console.log('Admin ingelogd:', user);
-                // Haal gegevens op voor de ingelogde admin
-                loadEmployees();
+                db.collection('employees').doc(user.uid).get().then(doc => {
+                    if (doc.exists && doc.data().role === 'Admin') {
+                        console.log('Admin ingelogd:', user);
+                        loadEmployees();
+                    } else {
+                        console.log('Geen adminrechten.');
+                        window.location.href = 'werknemers_login.html';
+                    }
+                });
             } else {
-                console.log('Geen admin ingelogd.');
-                window.location.href = 'admin_login.html';
+                console.log('Geen gebruiker ingelogd.');
+                window.location.href = 'werknemers_login.html';
             }
         });
 
