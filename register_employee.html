@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register Employee</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-        // Your web app's Firebase configuration
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+    <script>
+        // Firebase configuratie
         const firebaseConfig = {
             apiKey: "AIzaSyBxwBT0Rs_GBgXfTZ23Nl2zSGZWO7f2r7A",
             authDomain: "werknemers-gcs.firebaseapp.com",
@@ -22,12 +20,12 @@
             measurementId: "G-1XZCJ3MTK4"
         };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Firebase initialiseren
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        // Function to register employee
+        // Functie om werknemer te registreren
         async function registerEmployee(event) {
             event.preventDefault();
 
@@ -42,12 +40,12 @@
             const role = document.getElementById('role').value;
 
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                 const user = userCredential.user;
 
                 console.log("User created: ", user);
 
-                await setDoc(doc(db, "employees", user.uid), {
+                await db.collection("employees").doc(user.uid).set({
                     firstName,
                     lastName,
                     address,
@@ -69,91 +67,42 @@
             }
         }
     </script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1e1e1e;
-            color: white;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .register-box {
-            background-color: #2c2c2c;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            width: 400px;
-        }
-        .register-box h2 {
-            margin-top: 0;
-            color: #d4d4d4;
-            text-align: center;
-        }
-        .register-box label {
-            color: #d4d4d4;
-            display: block;
-            margin: 10px 0 5px;
-        }
-        .register-box input, .register-box select, .register-box button {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border: none;
-            border-radius: 5px;
-        }
-        .register-box button {
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        .register-box button:hover {
-            background-color: #45a049;
-        }
-        .register-box input, .register-box select {
-            background-color: #3a3a3a;
-            color: white;
-        }
-    </style>
 </head>
 <body>
-    <div class="register-box">
-        <h2>Register Employee</h2>
+    <div class="register-form-container">
+        <h1>Register Employee</h1>
         <form id="register-form" onsubmit="registerEmployee(event)">
             <label for="first-name">First Name:</label>
             <input type="text" id="first-name" required>
-            
+
             <label for="last-name">Last Name:</label>
             <input type="text" id="last-name" required>
-            
+
             <label for="address">Address:</label>
             <input type="text" id="address" required>
-            
+
             <label for="city">City:</label>
             <input type="text" id="city" required>
-            
+
             <label for="postal-code">Postal Code:</label>
             <input type="text" id="postal-code" required>
-            
+
             <label for="email">Email:</label>
             <input type="email" id="email" required>
-            
+
             <label for="password">Password:</label>
             <input type="password" id="password" required>
-            
+
             <label for="hourly-rate">Hourly Rate:</label>
             <input type="number" id="hourly-rate" required>
-            
+
             <label for="role">Role:</label>
             <select id="role" required>
                 <option value="Employee">Employee</option>
                 <option value="Admin">Admin</option>
-                <option value="Client">Client</option>
+                <option value="Customer">Customer</option>
             </select>
-            
+
             <button type="submit">Register</button>
         </form>
     </div>
