@@ -5,18 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
     <script>
         // Firebase configuratie
         const firebaseConfig = {
-            apiKey: "JOUW_API_KEY",
-            authDomain: "JOUW_PROJECT_ID.firebaseapp.com",
-            projectId: "JOUW_PROJECT_ID",
-            storageBucket: "JOUW_PROJECT_ID.appspot.com",
-            messagingSenderId: "JOUW_SENDER_ID",
-            appId: "JOUW_APP_ID"
+            apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
+            authDomain: "register-employee-gcs.firebaseapp.com",
+            projectId: "register-employee-gcs",
+            storageBucket: "register-employee-gcs.appspot.com",
+            messagingSenderId: "823490257683",
+            appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
+            measurementId: "G-Q68YZMSFJX"
         };
 
         // Firebase initialiseren
@@ -29,6 +30,17 @@
             if (user) {
                 console.log('Gebruiker ingelogd:', user);
                 // Haal gegevens op voor de ingelogde werknemer
+                db.collection('employees').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('total-hours').textContent = data.totalHours || 0;
+                        document.getElementById('total-earnings').textContent = `€${data.totalEarnings || 0}`;
+                        document.getElementById('hourly-rate').textContent = `€${data.hourlyRate || 0}`;
+                        document.getElementById('week-progress').value = data.weekProgress || 0;
+                    } else {
+                        console.log('Geen gegevens gevonden voor deze gebruiker');
+                    }
+                });
             } else {
                 console.log('Geen gebruiker ingelogd.');
                 window.location.href = 'werknemers_login.html';
@@ -45,15 +57,6 @@
                 const endTime = document.getElementById('end-time').value;
                 const breakTime = document.getElementById('break-time').value;
                 const hoursWorked = calculateHours(startTime, endTime, breakTime);
-
-                console.log('Registratie gegevens:', {
-                    userId: user.uid,
-                    day: day,
-                    startTime: startTime,
-                    endTime: endTime,
-                    breakTime: breakTime,
-                    hoursWorked: hoursWorked
-                });
 
                 db.collection('hours').add({
                     userId: user.uid,
@@ -84,6 +87,19 @@
             const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
             const breakHours = breakTime / 60; // pauzetijd in uren
             return diff - breakHours;
+        }
+
+        // Functie om zichtbaarheid te togglen
+        function toggleVisibility(id) {
+            const elem = document.getElementById(id);
+            const button = elem.nextElementSibling;
+            if (elem.style.display === 'none') {
+                elem.style.display = 'inline';
+                button.innerHTML = '&#128065;';
+            } else {
+                elem.style.display = 'none';
+                button.innerHTML = '&#128064;';
+            }
         }
     </script>
     <style>
@@ -196,34 +212,4 @@
         <h2>Werk Agenda</h2>
         <div id="calendar"></div>
         <button onclick="addEvent()">Event Toevoegen</button>
-    </div>
-
-    <script>
-        // Placeholder functie voor agenda
-        function addEvent() {
-            alert('Event Toevoegen - Functie nog niet geïmplementeerd');
-        }
-
-        // Placeholder functie voor week navigatie
-        function previousWeek() {
-            alert('Vorige Week - Functie nog niet geïmplementeerd');
-        }
-
-        function nextWeek() {
-            alert('Volgende Week - Functie nog niet geïmplementeerd');
-        }
-
-        function toggleVisibility(id) {
-            const elem = document.getElementById(id);
-            const button = elem.nextElementSibling;
-            if (elem.style.display === 'none') {
-                elem.style.display = 'inline';
-                button.innerHTML = '&#128065;';
-            } else {
-                elem.style.display = 'none';
-                button.innerHTML = '&#128064;';
-            }
-        }
-    </script>
-</body>
-</html>
+    </
