@@ -3,13 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registreer Werknemer</title>
+    <title>Register Employee</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Registreer Werknemer</h2>
+        <form id="register-form">
+            <label for="first-name">Voornaam:</label>
+            <input type="text" id="first-name" required>
+
+            <label for="last-name">Achternaam:</label>
+            <input type="text" id="last-name" required>
+
+            <label for="address">Adres:</label>
+            <input type="text" id="address" required>
+
+            <label for="city">Stad:</label>
+            <input type="text" id="city" required>
+
+            <label for="postal-code">Postcode:</label>
+            <input type="text" id="postal-code" required>
+
+            <label for="email">E-mail:</label>
+            <input type="email" id="email" required>
+
+            <label for="password">Wachtwoord:</label>
+            <input type="password" id="password" required>
+
+            <label for="hourly-rate">Uurtarief:</label>
+            <input type="number" id="hourly-rate" required>
+
+            <label for="role">Rol:</label>
+            <select id="role" required>
+                <option value="Werknemer">Werknemer</option>
+                <option value="Admin">Admin</option>
+            </select>
+
+            <button type="submit">Registreer</button>
+        </form>
+    </div>
+
     <script>
-        // Your web app's Firebase configuration
+        // Je Firebase configuratie
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -20,15 +59,16 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
-        // Initialize Firebase
+        // Firebase initialiseren
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
-        // Function to register employee
+
+        document.getElementById('register-form').addEventListener('submit', registerEmployee);
+
         function registerEmployee(event) {
             event.preventDefault();
-
+            
             const firstName = document.getElementById('first-name').value;
             const lastName = document.getElementById('last-name').value;
             const address = document.getElementById('address').value;
@@ -64,35 +104,5 @@
                 });
         }
     </script>
-</head>
-<body>
-    <div class="register-container">
-        <h1>Registreer Werknemer</h1>
-        <form id="register-form" onsubmit="registerEmployee(event)">
-            <label for="first-name">Voornaam:</label>
-            <input type="text" id="first-name" required>
-            <label for="last-name">Achternaam:</label>
-            <input type="text" id="last-name" required>
-            <label for="address">Adres:</label>
-            <input type="text" id="address" required>
-            <label for="city">Stad:</label>
-            <input type="text" id="city" required>
-            <label for="postal-code">Postcode:</label>
-            <input type="text" id="postal-code" required>
-            <label for="email">E-mail:</label>
-            <input type="email" id="email" required>
-            <label for="password">Wachtwoord:</label>
-            <input type="password" id="password" required>
-            <label for="hourly-rate">Uurtarief:</label>
-            <input type="number" id="hourly-rate" required>
-            <label for="role">Rol:</label>
-            <select id="role" required>
-                <option value="Employee">Werknemer</option>
-                <option value="Admin">Admin</option>
-                <option value="Client">Klant</option>
-            </select>
-            <button type="submit">Registreer</button>
-        </form>
-    </div>
 </body>
 </html>
