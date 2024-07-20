@@ -8,8 +8,8 @@
     <script type="module">
         // Firebase configuratie importeren
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBxwBT0Rs_GBgXfTZ23Nl2zSGZWO7f2r7A",
@@ -25,22 +25,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth();
         const db = getFirestore(app);
-
-        // Controleer of gebruiker is ingelogd en een admin is
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const userDoc = await getDoc(doc(db, 'employees', user.uid));
-                if (userDoc.exists() && userDoc.data().role === 'admin') {
-                    console.log('Admin ingelogd');
-                } else {
-                    alert('Toegang geweigerd: alleen beheerders kunnen werknemers registreren.');
-                    window.location.href = 'werknemers_login.html';
-                }
-            } else {
-                alert('Je moet ingelogd zijn als beheerder om toegang te krijgen.');
-                window.location.href = 'werknemers_login.html';
-            }
-        });
 
         // Functie voor werknemer registratie
         document.addEventListener('DOMContentLoaded', function () {
