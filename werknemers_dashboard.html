@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-        // Your web app's Firebase configuration
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+    <script>
+        // Firebase configuratie
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -22,29 +20,31 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Firebase initialiseren
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
         // Controleer of gebruiker is ingelogd
-        onAuthStateChanged(auth, (user) => {
+        auth.onAuthStateChanged(user => {
             if (user) {
                 console.log('Gebruiker ingelogd:', user);
                 // Haal gegevens op voor de ingelogde werknemer
-                const userDocRef = doc(db, 'employees', user.uid);
-                getDoc(userDocRef)
-                    .then((docSnapshot) => {
-                        if (docSnapshot.exists()) {
-                            const data = docSnapshot.data();
-                            document.getElementById('total-hours').textContent = data.totalHours || 0;
-                            document.getElementById('total-earnings').textContent = `€${data.totalEarnings || 0}`;
-                            document.getElementById('hourly-rate').textContent = `€${data.hourlyRate || 0}`;
-                            document.getElementById('week-progress').value = data.weekProgress || 0;
-                        } else {
-                            console.log('Geen gegevens gevonden voor deze gebruiker');
-                        }
-                    });
+                db.collection('employees').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('total-hours').textContent = data.totalHours || 0;
+                        document.getElementById('total-earnings').textContent = `€${data.totalEarnings || 0}`;
+                        document.getElementById('hourly-rate').textContent = `€${data.hourlyRate || 0}`;
+                        document.getElementById('week-progress').value = data.weekProgress || 0;
+
+                        // Standaard verborgen
+                        document.getElementById('total-earnings').style.display = 'none';
+                        document.getElementById('hourly-rate').style.display = 'none';
+                    } else {
+                        console.log('Geen gegevens gevonden voor deze gebruiker');
+                    }
+                });
             } else {
                 console.log('Geen gebruiker ingelogd.');
                 window.location.href = 'werknemers_login.html';
@@ -62,7 +62,7 @@
                 const breakTime = document.getElementById('break-time').value;
                 const hoursWorked = calculateHours(startTime, endTime, breakTime);
 
-                addDoc(collection(db, 'hours'), {
+                db.collection('hours').add({
                     userId: user.uid,
                     day: day,
                     startTime: startTime,
@@ -212,6 +212,4 @@
         </div>
     </div>
 
-    <div class="dashboard-box" id="agenda-box">
-        <h2>Werk Agenda</h2>
-        <div id="calendar
+    <div class="dashboard
