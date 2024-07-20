@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Login</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+    <script>
+        // Firebase configuratie
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -20,55 +20,54 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        // Firebase initialiseren
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-        async function loginEmployee(event) {
-            event.preventDefault();
-            const emailField = document.getElementById('email');
-            const passwordField = document.getElementById('password');
-            const email = emailField.value;
-            const password = passwordField.value;
-            const errorMessageElement = document.getElementById('error-message');
+        function loginEmployee(event) {
+            event.preventDefault();  // Voeg deze regel toe om de pagina niet te laten verversen
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
 
-            emailField.style.border = "";
-            passwordField.style.border = "";
-            errorMessageElement.style.display = "none";
-            errorMessageElement.textContent = "";
+            // Reset randen
+            document.getElementById('email').style.borderColor = '';
+            document.getElementById('password').style.borderColor = '';
 
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                const userDocRef = doc(db, 'employees', user.uid);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-
-                    if (userData.Role === 'Werknemer') {
-                        window.location.href = 'werknemers_dashboard.html';
-                    } else {
-                        errorMessageElement.textContent = 'Geen toegang. U bent geen werknemer.';
-                        errorMessageElement.style.display = 'block';
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    db.collection('employees').doc(user.uid).get()
+                        .then((doc) => {
+                            if (doc.exists) {
+                                const data = doc.data();
+                                if (data.Role === 'Werknemer') {
+                                    window.location.href = 'werknemers_dashboard.html';
+                                } else if (data.Role === 'Admin') {
+                                    window.location.href = 'admin_dashboard.html';
+                                } else {
+                                    alert('Onbekende rol, neem contact op met de beheerder.');
+                                }
+                            } else {
+                                alert('Gebruikersgegevens niet gevonden.');
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('Fout bij ophalen gebruikersgegevens:', error);
+                        });
+                })
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    if (errorCode === 'auth/user-not-found') {
+                        document.getElementById('email').style.borderColor = 'red';
+                    } else if (errorCode === 'auth/wrong-password') {
+                        document.getElementById('password').style.borderColor = 'red';
                     }
-                } else {
-                    errorMessageElement.textContent = 'Gebruikersgegevens niet gevonden.';
-                    errorMessageElement.style.display = 'block';
-                }
-            } catch (error) {
-                if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found') {
-                    emailField.style.border = "2px solid red";
-                    errorMessageElement.textContent = 'Onjuist e-mailadres. Probeer het opnieuw.';
-                } else if (error.code === 'auth/wrong-password') {
-                    passwordField.style.border = "2px solid red";
-                    errorMessageElement.textContent = 'Onjuist wachtwoord. Probeer het opnieuw.';
-                } else {
-                    errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
-                }
-                errorMessageElement.style.display = 'block';
-            }
+                    console.error('Fout bij inloggen:', errorMessage);
+                });
+
+            return false;
         }
     </script>
     <style>
@@ -111,6 +110,9 @@
             border: none;
             border-radius: 5px;
         }
+        .login-container input:focus {
+            outline: none;
+        }
         .login-container button {
             width: 100%;
             padding: 10px;
@@ -125,10 +127,7 @@
         }
         .login-container #error-message {
             display: none;
-            color: white;
-            background-color: red;
-            padding: 10px;
-            border-radius: 5px;
+            color: red;
             margin-top: 10px;
         }
     </style>
@@ -137,7 +136,7 @@
     <div class="login-container">
         <img src="https://github.com/Cbyrk/global-climate-solutions/blob/main/gcs_logo_final_enhanced_v5.jpg?raw=true" alt="GCS Logo">
         <h1>Werknemers Login</h1>
-        <form onsubmit="loginEmployee(event)">
+        <form onsubmit="return loginEmployee(event)">
             <label for="email">E-mail:</label>
             <input type="email" id="email" name="email" required>
             <label for="password">Wachtwoord:</label>
