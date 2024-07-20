@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tijdelijke Registratie</title>
+    <title>Register Employee</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module">
-        // Firebase configuratie importeren
+        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBxwBT0Rs_GBgXfTZ23Nl2zSGZWO7f2r7A",
             authDomain: "werknemers-gcs.firebaseapp.com",
@@ -23,56 +24,56 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Functie voor werknemer registratie
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('register-form').addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const firstName = document.getElementById('first-name').value;
-                const lastName = document.getElementById('last-name').value;
-                const address = document.getElementById('address').value;
-                const city = document.getElementById('city').value;
-                const postalCode = document.getElementById('postal-code').value;
-                const hourlyRate = document.getElementById('hourly-rate').value;
-                const role = document.getElementById('role').value;
+        // Function to register employee
+        async function registerEmployee(event) {
+            event.preventDefault();
 
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-                    await setDoc(doc(db, 'employees', user.uid), {
-                        email: email,
-                        firstName: firstName,
-                        lastName: lastName,
-                        address: address,
-                        city: city,
-                        postalCode: postalCode,
-                        hourlyRate: hourlyRate,
-                        role: role,
-                        mustChangePassword: true
-                    });
-                    alert('Admin succesvol geregistreerd');
-                    document.getElementById('register-form').reset();
-                } catch (error) {
-                    console.error('Fout bij registratie:', error);
-                    alert('Er is een fout opgetreden bij de registratie: ' + error.message);
-                }
-            });
-        });
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const address = document.getElementById('address').value;
+            const city = document.getElementById('city').value;
+            const postalCode = document.getElementById('postalCode').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const hourlyRate = document.getElementById('hourlyRate').value;
+            const role = document.getElementById('role').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                await setDoc(doc(db, "employees", user.uid), {
+                    firstName: firstName,
+                    lastName: lastName,
+                    address: address,
+                    city: city,
+                    postalCode: postalCode,
+                    email: email,
+                    hourlyRate: hourlyRate,
+                    role: role,
+                    mustChangePassword: true
+                });
+                alert('Employee registered successfully');
+                document.getElementById('register-form').reset();
+            } catch (error) {
+                console.error('Error registering employee:', error);
+                alert('Error registering employee: ' + error.message);
+            }
+        }
     </script>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #1e1e1e;
             color: white;
+            margin: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
         }
         .register-box {
             background-color: #2c2c2c;
@@ -83,71 +84,58 @@
         }
         .register-box h2 {
             margin-top: 0;
-            text-align: center;
             color: #d4d4d4;
         }
         .register-box label {
-            display: block;
             color: #d4d4d4;
-            margin-bottom: 5px;
         }
-        .register-box input, .register-box select {
+        .register-box input, .register-box button, .register-box select {
             width: 100%;
             padding: 10px;
-            margin: 5px 0 15px;
+            margin: 5px 0;
             border: none;
             border-radius: 5px;
-            background-color: #3a3a3a;
-            color: white;
         }
         .register-box button {
-            width: 100%;
-            padding: 10px;
             background-color: #4CAF50;
-            border: none;
-            border-radius: 5px;
             color: white;
             cursor: pointer;
         }
         .register-box button:hover {
             background-color: #45a049;
         }
+        .register-box input[type="number"], .register-box input[type="date"], .register-box input[type="time"], .register-box select {
+            background-color: #3a3a3a;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="register-box">
-        <h2>Tijdelijke Registratie</h2>
-        <form id="register-form">
-            <label for="first-name">Voornaam</label>
-            <input type="text" id="first-name" required>
-
-            <label for="last-name">Achternaam</label>
-            <input type="text" id="last-name" required>
-
-            <label for="address">Adres</label>
+        <h2>Register Employee</h2>
+        <form id="register-form" onsubmit="registerEmployee(event)">
+            <label for="firstName">Voornaam:</label>
+            <input type="text" id="firstName" required>
+            <label for="lastName">Achternaam:</label>
+            <input type="text" id="lastName" required>
+            <label for="address">Adres:</label>
             <input type="text" id="address" required>
-
-            <label for="city">Stad</label>
+            <label for="city">Stad:</label>
             <input type="text" id="city" required>
-
-            <label for="postal-code">Postcode</label>
-            <input type="text" id="postal-code" required>
-
-            <label for="email">E-mail</label>
+            <label for="postalCode">Postcode:</label>
+            <input type="text" id="postalCode" required>
+            <label for="email">E-mail:</label>
             <input type="email" id="email" required>
-
-            <label for="password">Wachtwoord</label>
+            <label for="password">Wachtwoord:</label>
             <input type="password" id="password" required>
-
-            <label for="hourly-rate">Uurtarief</label>
-            <input type="number" id="hourly-rate" required>
-
-            <label for="role">Rol</label>
+            <label for="hourlyRate">Uurtarief:</label>
+            <input type="number" id="hourlyRate" required>
+            <label for="role">Rol:</label>
             <select id="role" required>
-                <option value="admin">Admin</option>
+                <option value="Employee">Werknemer</option>
+                <option value="Admin">Admin</option>
             </select>
-
-            <button type="submit">Registreer</button>
+            <button type="submit">Register</button>
         </form>
     </div>
 </body>
