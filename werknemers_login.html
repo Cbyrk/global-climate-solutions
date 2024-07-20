@@ -6,11 +6,12 @@
     <title>Werknemers Login</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module">
-        // Firebase configuratie
+        // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,7 +22,7 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
-        // Firebase initialiseren
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -39,6 +40,7 @@
                         .then((docSnapshot) => {
                             if (docSnapshot.exists()) {
                                 const role = docSnapshot.data().Role;
+                                console.log('Role:', role); // Voeg deze regel toe voor debugging
                                 if (role === 'Werknemer') {
                                     window.location.href = 'werknemers_dashboard.html';
                                 } else if (role === 'Admin') {
@@ -103,6 +105,15 @@
             border: none;
             border-radius: 5px;
         }
+        .login-container input[type="email"], .login-container input[type="password"] {
+            background-color: #3a3a3a;
+            color: white;
+            border: 1px solid #3a3a3a;
+        }
+        .login-container input[type="email"]:focus, .login-container input[type="password"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
         .login-container button {
             width: 100%;
             padding: 10px;
@@ -115,12 +126,13 @@
         .login-container button:hover {
             background-color: darkgreen;
         }
-        .login-container input[type="email"], .login-container input[type="password"] {
-            background-color: #3a3a3a;
-            color: white;
-        }
-        .login-container input[type="email"].error, .login-container input[type="password"].error {
-            border-color: red;
+        .login-container #error-message {
+            display: none;
+            color: red;
+            margin-top: 10px;
+            border-radius: 5px;
+            padding: 5px;
+            background-color: #ffdddd;
         }
     </style>
 </head>
@@ -135,43 +147,7 @@
             <input type="password" id="password" name="password" required>
             <button type="submit">Inloggen</button>
         </form>
+        <p id="error-message"></p>
     </div>
 </body>
 </html>
-window.loginEmployee = (event) => {
-    event.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-
-    signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            const userDocRef = doc(db, 'employees', user.uid);
-            getDoc(userDocRef)
-                .then((docSnapshot) => {
-                    if (docSnapshot.exists()) {
-                        const role = docSnapshot.data().Role;
-                        console.log('Role:', role); // Voeg deze regel toe voor debugging
-                        if (role === 'Werknemer') {
-                            window.location.href = 'werknemers_dashboard.html';
-                        } else if (role === 'Admin') {
-                            window.location.href = 'admin_dashboard.html';
-                        } else {
-                            alert('Ongeldige rol. Neem contact op met de beheerder.');
-                        }
-                    } else {
-                        alert('Gebruikersgegevens niet gevonden.');
-                    }
-                });
-        })
-        .catch((error) => {
-            console.error('Fout bij inloggen:', error);
-            if (error.code === 'auth/wrong-password') {
-                document.getElementById('password').style.borderColor = 'red';
-            } else if (error.code === 'auth/user-not-found') {
-                document.getElementById('email').style.borderColor = 'red';
-            } else {
-                alert('Fout bij inloggen: ' + error.message);
-            }
-        });
-}
