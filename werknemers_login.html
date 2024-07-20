@@ -32,40 +32,32 @@
             const password = passwordField.value;
             const errorMessageElement = document.getElementById('error-message');
 
-            // Reset borders and error message
             emailField.style.border = "";
             passwordField.style.border = "";
             errorMessageElement.style.display = "none";
             errorMessageElement.textContent = "";
 
             try {
-                console.log('Proberen in te loggen met email:', email);
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
-                console.log('Ingelogde gebruiker:', user);
 
                 const userDocRef = doc(db, 'employees', user.uid);
                 const userDoc = await getDoc(userDocRef);
 
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    console.log('Gebruikersgegevens:', userData);
 
                     if (userData.Role === 'Werknemer') {
-                        console.log('Gebruiker met rol Werknemer gevonden, doorverwijzen naar dashboard.');
                         window.location.href = 'werknemers_dashboard.html';
                     } else {
-                        console.log('Geen toegang. U bent geen werknemer.');
                         errorMessageElement.textContent = 'Geen toegang. U bent geen werknemer.';
                         errorMessageElement.style.display = 'block';
                     }
                 } else {
-                    console.log('Gebruikersgegevens niet gevonden.');
                     errorMessageElement.textContent = 'Gebruikersgegevens niet gevonden.';
                     errorMessageElement.style.display = 'block';
                 }
             } catch (error) {
-                console.error('Fout bij inloggen:', error);
                 if (error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found') {
                     emailField.style.border = "2px solid red";
                     errorMessageElement.textContent = 'Onjuist e-mailadres. Probeer het opnieuw.';
