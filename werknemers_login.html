@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Login</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
-    <script>
+    <script type="module">
         // Firebase configuratie
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,53 +22,38 @@
         };
 
         // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        function loginEmployee() {
+        async function loginEmployee(event) {
+            event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const errorMessageElement = document.getElementById('error-message');
 
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
 
-                    db.collection('employees').doc(user.uid).get()
-                        .then((doc) => {
-                            if (doc.exists && doc.data().mustChangePassword) {
-                                window.location.href = 'change_password.html';
-                            } else if (doc.exists) {
-                                const role = doc.data().Role;
-                                if (role === 'Admin') {
-                                    window.location.href = 'admin_dashboard.html';
-                                } else if (role === 'Werknemer') {
-                                    window.location.href = 'werknemer_dashboard.html';
-                                } else if (role === 'Klant') {
-                                    window.location.href = 'klant_dashboard.html';
-                                } else {
-                                    errorMessageElement.textContent = 'Onbekende rol. Neem contact op met de beheerder.';
-                                    errorMessageElement.style.display = 'block';
-                                }
-                            } else {
-                                errorMessageElement.textContent = 'Geen gebruikersgegevens gevonden. Neem contact op met de beheerder.';
-                                errorMessageElement.style.display = 'block';
-                            }
-                        })
-                        .catch((error) => {
-                            console.error('Fout bij het ophalen van gebruikersgegevens:', error);
-                            errorMessageElement.textContent = 'Fout bij het ophalen van gebruikersgegevens. Probeer het opnieuw.';
-                            errorMessageElement.style.display = 'block';
-                        });
-                })
-                .catch((error) => {
-                    console.error('Fout bij inloggen:', error);
-                    errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
+                const userDoc = await getDoc(doc(db, 'employees', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.role === 'Admin') {
+                        window.location.href = 'admin_dashboard.html';
+                    } else {
+                        window.location.href = 'werknemers_dashboard.html';
+                    }
+                } else {
+                    console.error('No such document!');
+                    errorMessageElement.textContent = 'Geen gegevens gevonden voor deze gebruiker.';
                     errorMessageElement.style.display = 'block';
-                });
-
-            return false;
+                }
+            } catch (error) {
+                console.error('Fout bij inloggen:', error);
+                errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
+                errorMessageElement.style.display = 'block';
+            }
         }
     </script>
     <style>
@@ -133,7 +119,7 @@
     <div class="login-container">
         <img src="gcs_logo_final_cleaned_v5.png" alt="GCS Logo">
         <h1>Werknemers Login</h1>
-        <form onsubmit="return loginEmployee()">
+        <form onsubmit="loginEmployee(event)">
             <label for="email">E-mail:</label>
             <input type="email" id="email" name="email" required>
             <label for="password">Wachtwoord:</label>
