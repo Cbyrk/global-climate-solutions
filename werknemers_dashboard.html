@@ -33,12 +33,12 @@
                 db.collection('employees').doc(user.uid).get().then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
-                        document.getElementById('employee-email').textContent = data.Email;
-                        document.getElementById('employee-address').textContent = data.Address;
-                        document.getElementById('employee-city').textContent = data.City;
-                        document.getElementById('employee-postal').textContent = data.PostalCode;
-                        document.getElementById('employee-hourly-rate').textContent = `€${data.HourlyRate}`;
+                        document.getElementById('employee-name').textContent = `${data.firstName} ${data.lastName}`;
+                        document.getElementById('employee-email').textContent = data.email;
+                        document.getElementById('employee-address').textContent = data.adress;
+                        document.getElementById('employee-city').textContent = data.city;
+                        document.getElementById('employee-postcode').textContent = data.postalCode;
+                        document.getElementById('employee-hourly-rate').textContent = `€${data.hourlyRate || 0}`;
                     } else {
                         console.log('Geen gegevens gevonden voor deze gebruiker');
                     }
@@ -89,6 +89,20 @@
             const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
             const breakHours = breakTime / 60; // pauzetijd in uren
             return diff - breakHours;
+        }
+
+        // Placeholder functie voor agenda
+        function addEvent() {
+            alert('Event Toevoegen - Functie nog niet geïmplementeerd');
+        }
+
+        // Placeholder functie voor week navigatie
+        function previousWeek() {
+            alert('Vorige Week - Functie nog niet geïmplementeerd');
+        }
+
+        function nextWeek() {
+            alert('Volgende Week - Functie nog niet geïmplementeerd');
         }
     </script>
     <style>
@@ -156,13 +170,13 @@
     </style>
 </head>
 <body>
-    <div class="dashboard-box" id="employee-info-box">
+    <div class="dashboard-box" id="employee-details-box">
         <h2>Werknemer Gegevens</h2>
         <p>Naam: <span id="employee-name"></span></p>
         <p>Email: <span id="employee-email"></span></p>
         <p>Adres: <span id="employee-address"></span></p>
         <p>Stad: <span id="employee-city"></span></p>
-        <p>Postcode: <span id="employee-postal"></span></p>
+        <p>Postcode: <span id="employee-postcode"></span></p>
         <p>Uurtarief: <span id="employee-hourly-rate"></span></p>
     </div>
 
