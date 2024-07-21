@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klant Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+    <script>
+        // Firebase configuratie
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
+            authDomain: "register-employee-gcs.firebaseapp.com",
+            projectId: "register-employee-gcs",
+            storageBucket: "register-employee-gcs.appspot.com",
+            messagingSenderId: "823490257683",
+            appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
+            measurementId: "G-Q68YZMSFJX"
+        };
+
+        // Firebase initialiseren
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Controleer of gebruiker is ingelogd
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log('Gebruiker ingelogd:', user);
+                // Haal gegevens op voor de ingelogde klant
+                db.collection('customers').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('customer-name').textContent = `${data.FirstName} ${data.LastName}`;
+                        document.getElementById('customer-email').textContent = data.Email;
+                        document.getElementById('customer-address').textContent = data.Address;
+                        document.getElementById('customer-city').textContent = data.City;
+                        document.getElementById('customer-postal').textContent = data.PostalCode;
+                    } else {
+                        console.log('Geen gegevens gevonden voor deze gebruiker');
+                    }
+                });
+            } else {
+                console.log('Geen gebruiker ingelogd.');
+                window.location.href = 'klanten_login.html';
+            }
+        });
+
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+        .dashboard-box {
+            background-color: #2c2c2c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        .dashboard-box h2 {
+            margin-top: 0;
+            color: #d4d4d4;
+        }
+        .dashboard-box p, .dashboard-box label {
+            color: #d4d4d4;
+        }
+        .dashboard-box input, .dashboard-box button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 5px;
+        }
+        .dashboard-box button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        .dashboard-box button:hover {
+            background-color: #45a049;
+        }
+        .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"] {
+            background-color: #3a3a3a;
+            color: white;
+        }
+        .dashboard-box meter {
+            width: 100%;
+        }
+        .dashboard-box .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-box" id="customer-info-box">
+        <h2>Klant Gegevens</h2>
+        <p>Naam: <span id="customer-name"></span></p>
+        <p>Email: <span id="customer-email"></span></p>
+        <p>Adres: <span id="customer-address"></span></p>
+        <p>Stad: <span id="customer-city"></span></p>
+        <p>Postcode: <span id="customer-postal"></span></p>
+    </div>
+
+    <div class="dashboard-box" id="project-info-box">
+        <h2>Projecten</h2>
+        <div id="project-list"></div>
+    </div>
+
+    <div class="dashboard-box" id="request-info-box">
+        <h2>Offerte Aanvragen</h2>
+        <form id="request-form">
+            <div>
+                <label for="request-title">Titel:</label>
+                <input type="text" id="request-title" required>
+            </div>
+            <div>
+                <label for="request-description">Beschrijving:</label>
+                <textarea id="request-description" required></textarea>
+            </div>
+            <button type="submit">Aanvragen</button>
+        </form>
+    </div>
+
+    <script>
+        // Placeholder functie voor projectlijst ophalen
+        function loadProjects() {
+            const user = auth.currentUser;
+            if (user) {
+                db.collection('projects').where('customerId', '==', user.uid).get().then(querySnapshot => {
+                    const projectList = document.getElementById('project-list');
+                    querySnapshot.forEach(doc => {
+                        const project = doc.data();
+                        const projectItem = document.createElement('div');
+                        projectItem.textContent = project.title;
+                        projectList.appendChild(projectItem);
+                    });
+                });
+            }
+        }
+
+        // Functie voor offerte aanvragen
+        document.getElementById('request-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (user) {
+                const title = document.getElementById('request-title').value;
+                const description = document.getElementById('request-description').value;
+
+                db.collection('requests').add({
+                    customerId: user.uid,
+                    title: title,
+                    description: description,
+                    status: 'pending',
+                    createdAt: new Date()
+                })
+                .then(() => {
+                    console.log('Aanvraag succesvol ingediend');
+                    alert('Aanvraag succesvol ingediend');
+                    document.getElementById('request-form').reset();
+                })
+                .catch((error) => {
+                    console.error('Fout bij het indienen van de aanvraag:', error);
+                    alert('Er is een fout opgetreden bij het indienen van de aanvraag: ' + error.message);
+                });
+            } else {
+                alert('Je moet ingelogd zijn om een aanvraag te doen.');
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    loadProjects();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
