@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="styles.css">
+    <link href='https://unpkg.com/fullcalendar@5.10.1/main.min.css' rel='stylesheet' />
+    <script src='https://unpkg.com/fullcalendar@5.10.1/main.min.js'></script>
     <script type="module">
-        // Firebase configuratie
+        // Voeg Firebase imports toe
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
         import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
@@ -31,10 +33,11 @@
             if (user) {
                 const userDocRef = doc(db, 'employees', user.uid);
                 getDoc(userDocRef).then(doc => {
-                    if (doc.exists && doc.data().role === 'Admin') {
+                    if (doc.exists && doc.data().Role === 'Admin') {
                         console.log('Admin ingelogd:', user);
                         loadEmployees();
                         loadCustomers();
+                        loadCalendar();
                     } else {
                         console.log('Geen adminrechten.');
                         window.location.href = 'werknemers_login.html';
@@ -50,12 +53,19 @@
         function loadEmployees() {
             getDocs(collection(db, 'employees')).then(querySnapshot => {
                 const employeeSelect = document.getElementById('employee-select');
+                const employeeLegend = document.getElementById('employee-legend');
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
                     const option = document.createElement('option');
                     option.value = doc.id;
                     option.textContent = `${data.FirstName} ${data.LastName}`;
                     employeeSelect.appendChild(option);
+
+                    // Voeg werknemer toe aan de legende
+                    const color = getColor(doc.id);
+                    const legendItem = document.createElement('div');
+                    legendItem.innerHTML = `<span style="background-color: ${color}; width: 10px; height: 10px; display: inline-block; margin-right: 5px;"></span>${data.FirstName}`;
+                    employeeLegend.appendChild(legendItem);
                 });
             });
         }
@@ -91,30 +101,68 @@
                 alert('Er is een fout opgetreden bij het toewijzen: ' + error.message);
             });
         });
+
+        // Functie om kleuren toe te wijzen aan werknemers
+        function getColor(employeeId) {
+            const colors = [
+                '#FF5733', '#33FF57', '#3357FF', '#F33FFF', '#FF33A1', '#33FFF5', '#FF8F33', '#33FF8F'
+            ];
+            const index = employeeId.charCodeAt(0) % colors.length;
+            return colors[index];
+        }
+
+        // Functie om de agenda te laden
+        function loadCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    getDocs(collection(db, 'events')).then(querySnapshot => {
+                        const events = [];
+                        querySnapshot.forEach(doc => {
+                            const data = doc.data();
+                            events.push({
+                                title: data.title,
+                                start: data.start,
+                                end: data.end,
+                                backgroundColor: getColor(data.employeeId),
+                                borderColor: getColor(data.employeeId)
+                            });
+                        });
+                        successCallback(events);
+                    }).catch(error => {
+                        console.error('Fout bij het ophalen van events:', error);
+                        failureCallback(error);
+                    });
+                }
+            });
+            calendar.render();
+        }
     </script>
     <style>
         body {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
             background-color: #121212;
             margin: 0;
             font-family: Arial, sans-serif;
+            color: white;
         }
-        .assign-container {
+        .assign-container, .calendar-container {
             background-color: #333;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-            text-align: center;
-            width: 300px;
+            margin: 10px;
+            width: 80%;
         }
-        .assign-container h1 {
+        .assign-container h1, .calendar-container h1 {
             color: white;
             margin-bottom: 20px;
         }
-        .assign-container label {
+        .assign-container label, .calendar-container label {
             color: white;
             display: block;
             text-align: left;
@@ -139,6 +187,13 @@
         .assign-container button:hover {
             background-color: darkgreen;
         }
+        #employee-legend div {
+            margin-bottom: 5px;
+        }
+        #calendar {
+            width: 100%;
+            max-width: 900px;
+        }
     </style>
 </head>
 <body>
@@ -151,6 +206,11 @@
             <select id="customer-select" required></select>
             <button type="submit">Toewijzen</button>
         </form>
+    </div>
+    <div class="calendar-container">
+        <h1>Gezamenlijke Agenda</h1>
+        <div id="employee-legend"></div>
+        <div id="calendar"></div>
     </div>
 </body>
 </html>
