@@ -9,7 +9,7 @@
         // Firebase configuratie
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        import { getFirestore, collection, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
@@ -21,20 +21,18 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
-        // Firebase initialiseren
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Controleer of gebruiker is ingelogd en admin
         onAuthStateChanged(auth, user => {
             if (user) {
+                // Controleer of de gebruiker admin is
                 const userDocRef = doc(db, 'employees', user.uid);
                 getDoc(userDocRef).then(doc => {
                     if (doc.exists && doc.data().Role === 'Admin') {
-                        console.log('Admin ingelogd:', user);
-                        loadCustomers();
                         loadEmployees();
+                        loadCustomers();
                     } else {
                         console.log('Geen adminrechten.');
                         window.location.href = 'werknemers_login.html';
@@ -46,49 +44,41 @@
             }
         });
 
-        // Functie om klanten op te halen
-        function loadCustomers() {
-            getDocs(collection(db, 'customers')).then((querySnapshot) => {
-                const customerSelect = document.getElementById('customer-select');
-                querySnapshot.forEach((doc) => {
-                    const customer = doc.data();
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = customer['Customer Name'];
-                    customerSelect.appendChild(option);
-                });
+        async function loadEmployees() {
+            const employeesSnapshot = await getDocs(collection(db, 'employees'));
+            const employeeSelect = document.getElementById('employee-select');
+            employeesSnapshot.forEach(doc => {
+                const employee = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = `${employee.FirstName} ${employee.LastName}`;
+                employeeSelect.appendChild(option);
             });
         }
 
-        // Functie om werknemers op te halen
-        function loadEmployees() {
-            getDocs(collection(db, 'employees')).then((querySnapshot) => {
-                const employeeList = document.getElementById('employee-list');
-                querySnapshot.forEach((doc) => {
-                    const employee = doc.data();
-                    const employeeItem = document.createElement('div');
-                    employeeItem.innerHTML = `
-                        <p>${employee.FirstName} ${employee.LastName} (${employee.Email})</p>
-                        <button onclick="assignCustomer('${doc.id}')">Toewijzen aan klant</button>
-                    `;
-                    employeeList.appendChild(employeeItem);
-                });
+        async function loadCustomers() {
+            const customersSnapshot = await getDocs(collection(db, 'customers'));
+            const customerSelect = document.getElementById('customer-select');
+            customersSnapshot.forEach(doc => {
+                const customer = doc.data();
+                const option = document.createElement('option');
+                option.value = doc.id;
+                option.textContent = customer['Customer Name'];
+                customerSelect.appendChild(option);
             });
         }
 
-        // Functie om klant toe te wijzen aan werknemer
-        window.assignCustomer = (employeeId) => {
+        async function assignEmployeeToCustomer(event) {
+            event.preventDefault();
+            const employeeId = document.getElementById('employee-select').value;
             const customerId = document.getElementById('customer-select').value;
+
             const employeeDocRef = doc(db, 'employees', employeeId);
-            updateDoc(employeeDocRef, {
+            await updateDoc(employeeDocRef, {
                 customerId: customerId
-            }).then(() => {
-                alert('Klant succesvol toegewezen.');
-                window.location.reload(); // Herlaad om bijgewerkte gegevens weer te geven
-            }).catch((error) => {
-                console.error('Fout bij het toewijzen van klant:', error);
-                alert('Er is een fout opgetreden bij het toewijzen van de klant: ' + error.message);
             });
+
+            alert('Werknemer succesvol toegewezen aan klant.');
         }
     </script>
     <style>
@@ -98,9 +88,8 @@
             color: white;
             margin: 0;
             padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto auto;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
         .dashboard-box {
@@ -116,7 +105,7 @@
         .dashboard-box p, .dashboard-box label {
             color: #d4d4d4;
         }
-        .dashboard-box select, .dashboard-box button {
+        .dashboard-box input, .dashboard-box select, .dashboard-box button {
             width: 100%;
             padding: 10px;
             margin: 5px 0;
@@ -135,10 +124,16 @@
 </head>
 <body>
     <div class="dashboard-box">
-        <h2>Klant Toewijzen</h2>
-        <label for="customer-select">Selecteer Klant:</label>
-        <select id="customer-select"></select>
-        <div id="employee-list"></div>
+        <h2>Toewijzen van Werknemers aan Klanten</h2>
+        <form onsubmit="assignEmployeeToCustomer(event)">
+            <label for="employee-select">Selecteer Werknemer:</label>
+            <select id="employee-select" required></select>
+
+            <label for="customer-select">Selecteer Klant:</label>
+            <select id="customer-select" required></select>
+
+            <button type="submit">Toewijzen</button>
+        </form>
     </div>
 </body>
 </html>
