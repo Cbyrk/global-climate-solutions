@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", function() {
         margin: 0;
         padding: 20px;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 2fr;
         grid-template-rows: auto auto;
         gap: 20px;
     }
@@ -246,6 +246,10 @@ document.addEventListener("DOMContentLoaded", function() {
         display: flex;
         justify-content: space-between;
         margin-top: 10px;
+    }
+    #calendar {
+        max-width: 100%;
+        margin: 0 auto;
     }
 </style>
 </head>
@@ -319,7 +323,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </form>
     </div>
 
-    <div class="dashboard-box" id="agenda-box">
+    <div class="dashboard-box" id="agenda-box" style="grid-column: span 2;">
         <h2>Gezamenlijke Agenda</h2>
         <div id="calendar"></div>
         <div>
