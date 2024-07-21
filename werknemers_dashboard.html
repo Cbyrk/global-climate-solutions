@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
-    <script>
+    <script type="module">
         // Firebase configuratie
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,17 +22,17 @@
         };
 
         // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
         // Controleer of gebruiker is ingelogd
-        auth.onAuthStateChanged(user => {
+        onAuthStateChanged(auth, user => {
             if (user) {
                 console.log('Gebruiker ingelogd:', user.uid);
                 // Haal gegevens op voor de ingelogde werknemer
-                db.collection('employees').doc(user.uid).get().then(doc => {
-                    if (doc.exists) {
+                getDoc(doc(db, 'employees', user.uid)).then(doc => {
+                    if (doc.exists()) {
                         const data = doc.data();
                         console.log('Werknemer gegevens:', data);
                         document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
@@ -53,36 +54,38 @@
         });
 
         // Functie voor urenregistratie
-        document.getElementById('hours-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (user) {
-                const day = document.getElementById('day').value;
-                const startTime = document.getElementById('start-time').value;
-                const endTime = document.getElementById('end-time').value;
-                const breakTime = document.getElementById('break-time').value;
-                const hoursWorked = calculateHours(startTime, endTime, breakTime);
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('hours-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const user = auth.currentUser;
+                if (user) {
+                    const day = document.getElementById('day').value;
+                    const startTime = document.getElementById('start-time').value;
+                    const endTime = document.getElementById('end-time').value;
+                    const breakTime = document.getElementById('break-time').value;
+                    const hoursWorked = calculateHours(startTime, endTime, breakTime);
 
-                db.collection('hours').add({
-                    userId: user.uid,
-                    day: day,
-                    startTime: startTime,
-                    endTime: endTime,
-                    breakTime: breakTime,
-                    hoursWorked: hoursWorked
-                })
-                .then(() => {
-                    console.log('Uren succesvol geregistreerd');
-                    alert('Uren succesvol geregistreerd');
-                    document.getElementById('hours-form').reset();
-                })
-                .catch((error) => {
-                    console.error('Fout bij het registreren van uren:', error);
-                    alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
-                });
-            } else {
-                alert('Je moet ingelogd zijn om uren te registreren.');
-            }
+                    addDoc(collection(db, 'hours'), {
+                        userId: user.uid,
+                        day: day,
+                        startTime: startTime,
+                        endTime: endTime,
+                        breakTime: breakTime,
+                        hoursWorked: hoursWorked
+                    })
+                    .then(() => {
+                        console.log('Uren succesvol geregistreerd');
+                        alert('Uren succesvol geregistreerd');
+                        document.getElementById('hours-form').reset();
+                    })
+                    .catch((error) => {
+                        console.error('Fout bij het registreren van uren:', error);
+                        alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
+                    });
+                } else {
+                    alert('Je moet ingelogd zijn om uren te registreren.');
+                }
+            });
         });
 
         // Functie om gewerkte uren te berekenen
@@ -95,18 +98,13 @@
         }
 
         // Placeholder functie voor agenda
-        function addEvent() {
-            alert('Event Toevoegen - Functie nog niet geïmplementeerd');
-        }
-
-        // Placeholder functie voor week navigatie
-        function previousWeek() {
-            alert('Vorige Week - Functie nog niet geïmplementeerd');
-        }
-
-        function nextWeek() {
-            alert('Volgende Week - Functie nog niet geïmplementeerd');
-        }
+        window.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.actions button').forEach(button => {
+                button.addEventListener('click', () => {
+                    alert('Functie nog niet geïmplementeerd');
+                });
+            });
+        });
     </script>
     <style>
         body {
