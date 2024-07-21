@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <script type="module">
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
+    <script>
         // Firebase configuratie
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-        import { getFirestore, doc, getDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -22,31 +21,29 @@
         };
 
         // Firebase initialiseren
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
         // Controleer of gebruiker is ingelogd
-        onAuthStateChanged(auth, user => {
+        auth.onAuthStateChanged(user => {
             if (user) {
-                console.log('Gebruiker ingelogd:', user.uid);
+                console.log('Gebruiker ingelogd:', user);
                 // Haal gegevens op voor de ingelogde werknemer
-                getDoc(doc(db, 'employees', user.uid)).then(doc => {
-                    if (doc.exists()) {
+                db.collection('employees').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
                         const data = doc.data();
-                        console.log('Werknemer gegevens:', data);
                         document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
                         document.getElementById('employee-email').textContent = data.Email;
                         document.getElementById('employee-address').textContent = data.Adress;
                         document.getElementById('employee-city').textContent = data.City;
-                        document.getElementById('employee-postcode').textContent = data.PostalCode;
-                        document.getElementById('employee-hourly-rate').textContent = `€${data.HourlyRate || 0}`;
+                        document.getElementById('employee-postal').textContent = data.PostalCode;
+                        document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
                     } else {
                         console.log('Geen gegevens gevonden voor deze gebruiker');
                     }
-                }).catch(error => {
-                    console.error('Fout bij het ophalen van werknemer gegevens:', error);
                 });
+                loadLoggedHours(user.uid);
             } else {
                 console.log('Geen gebruiker ingelogd.');
                 window.location.href = 'werknemers_login.html';
@@ -54,38 +51,37 @@
         });
 
         // Functie voor urenregistratie
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('hours-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                const user = auth.currentUser;
-                if (user) {
-                    const day = document.getElementById('day').value;
-                    const startTime = document.getElementById('start-time').value;
-                    const endTime = document.getElementById('end-time').value;
-                    const breakTime = document.getElementById('break-time').value;
-                    const hoursWorked = calculateHours(startTime, endTime, breakTime);
+        document.getElementById('hours-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (user) {
+                const day = document.getElementById('day').value;
+                const startTime = document.getElementById('start-time').value;
+                const endTime = document.getElementById('end-time').value;
+                const breakTime = document.getElementById('break-time').value;
+                const hoursWorked = calculateHours(startTime, endTime, breakTime);
 
-                    addDoc(collection(db, 'hours'), {
-                        userId: user.uid,
-                        day: day,
-                        startTime: startTime,
-                        endTime: endTime,
-                        breakTime: breakTime,
-                        hoursWorked: hoursWorked
-                    })
-                    .then(() => {
-                        console.log('Uren succesvol geregistreerd');
-                        alert('Uren succesvol geregistreerd');
-                        document.getElementById('hours-form').reset();
-                    })
-                    .catch((error) => {
-                        console.error('Fout bij het registreren van uren:', error);
-                        alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
-                    });
-                } else {
-                    alert('Je moet ingelogd zijn om uren te registreren.');
-                }
-            });
+                db.collection('hours').add({
+                    userId: user.uid,
+                    day: day,
+                    startTime: startTime,
+                    endTime: endTime,
+                    breakTime: breakTime,
+                    hoursWorked: hoursWorked
+                })
+                .then(() => {
+                    console.log('Uren succesvol geregistreerd');
+                    alert('Uren succesvol geregistreerd');
+                    document.getElementById('hours-form').reset();
+                    loadLoggedHours(user.uid); // Herlaad de geregistreerde uren
+                })
+                .catch((error) => {
+                    console.error('Fout bij het registreren van uren:', error);
+                    alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
+                });
+            } else {
+                alert('Je moet ingelogd zijn om uren te registreren.');
+            }
         });
 
         // Functie om gewerkte uren te berekenen
@@ -96,13 +92,31 @@
             const breakHours = breakTime / 60; // pauzetijd in uren
             return diff - breakHours;
         }
-
-        // Placeholder functie voor agenda
-        window.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.actions button').forEach(button => {
-                button.addEventListener('click', () => {
-                    alert('Functie nog niet geïmplementeerd');
+        
+        // Functie om geregistreerde uren op te halen
+        function loadLoggedHours(userId) {
+            db.collection('hours').where('userId', '==', userId).get().then(querySnapshot => {
+                const hoursLogged = document.getElementById('hours-logged');
+                hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
+                querySnapshot.forEach(doc => {
+                    const hours = doc.data();
+                    const hoursItem = document.createElement('div');
+                    hoursItem.textContent = `Dag: ${hours.day}, Starttijd: ${hours.startTime}, Eindtijd: ${hours.endTime}, Pauzetijd: ${hours.breakTime} minuten, Gewerkte uren: ${hours.hoursWorked}`;
+                    hoursLogged.appendChild(hoursItem);
                 });
+            });
+        }
+
+        // Functie voor agenda
+        function loadAgenda() {
+            alert('Agenda Functie - Nog niet geïmplementeerd');
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    loadLoggedHours(user.uid);
+                }
             });
         });
     </script>
@@ -158,27 +172,17 @@
             justify-content: space-between;
             margin-top: 10px;
         }
-        .icon-button {
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
-        .icon-button img {
-            width: 20px;
-            height: 20px;
-            filter: invert(42%) sepia(95%) saturate(4267%) hue-rotate(327deg) brightness(99%) contrast(105%);
-        }
     </style>
 </head>
 <body>
-    <div class="dashboard-box" id="employee-details-box">
+    <div class="dashboard-box" id="employee-info-box">
         <h2>Werknemer Gegevens</h2>
         <p>Naam: <span id="employee-name"></span></p>
         <p>Email: <span id="employee-email"></span></p>
         <p>Adres: <span id="employee-address"></span></p>
         <p>Stad: <span id="employee-city"></span></p>
-        <p>Postcode: <span id="employee-postcode"></span></p>
-        <p>Uurtarief: <span id="employee-hourly-rate"></span></p>
+        <p>Postcode: <span id="employee-postal"></span></p>
+        <p>Uurtarief: <span id="employee-rate"></span></p>
     </div>
 
     <div class="dashboard-box" id="hours-register-box">
@@ -235,4 +239,4 @@
         }
     </script>
 </body>
-</html
+</html>
