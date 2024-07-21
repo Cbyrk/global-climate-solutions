@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
-    <script>
+    <script type="module">
         // Firebase configuratie
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,16 +22,18 @@
         };
 
         // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
         // Controleer of gebruiker is ingelogd en admin
-        auth.onAuthStateChanged(user => {
+        onAuthStateChanged(auth, user => {
             if (user) {
-                db.collection('employees').doc(user.uid).get().then(doc => {
-                    if (doc.exists && doc.data().role === 'Admin') {
+                const userDocRef = doc(db, 'employees', user.uid);
+                getDoc(userDocRef).then(doc => {
+                    if (doc.exists && doc.data().Role === 'Admin') {
                         console.log('Admin ingelogd:', user);
+                        loadCustomers();
                         loadEmployees();
                     } else {
                         console.log('Geen adminrechten.');
@@ -43,28 +46,50 @@
             }
         });
 
-        // Functie om werknemersgegevens op te halen
-        function loadEmployees() {
-            db.collection('employees').get().then((snapshot) => {
-                snapshot.forEach((doc) => {
-                    let data = doc.data();
-                    let employeeItem = document.createElement('div');
-                    employeeItem.innerHTML = `
-                        <p>Naam: ${data.firstName} ${data.lastName}</p>
-                        <p>Email: ${data.email}</p>
-                        <button onclick="viewEmployee('${doc.id}')">Bekijk Dashboard</button>
-                    `;
-                    document.getElementById('employee-list').appendChild(employeeItem);
+        // Functie om klanten op te halen
+        function loadCustomers() {
+            getDocs(collection(db, 'customers')).then((querySnapshot) => {
+                const customerSelect = document.getElementById('customer-select');
+                querySnapshot.forEach((doc) => {
+                    const customer = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = customer['Customer Name'];
+                    customerSelect.appendChild(option);
                 });
             });
         }
 
-        function viewEmployee(employeeId) {
-            // Code om door te gaan naar de specifieke werknemer's dashboard
-            window.location.href = `employee_dashboard.html?id=${employeeId}`;
+        // Functie om werknemers op te halen
+        function loadEmployees() {
+            getDocs(collection(db, 'employees')).then((querySnapshot) => {
+                const employeeList = document.getElementById('employee-list');
+                querySnapshot.forEach((doc) => {
+                    const employee = doc.data();
+                    const employeeItem = document.createElement('div');
+                    employeeItem.innerHTML = `
+                        <p>${employee.FirstName} ${employee.LastName} (${employee.Email})</p>
+                        <button onclick="assignCustomer('${doc.id}')">Toewijzen aan klant</button>
+                    `;
+                    employeeList.appendChild(employeeItem);
+                });
+            });
         }
 
-        window.onload = loadEmployees;
+        // Functie om klant toe te wijzen aan werknemer
+        window.assignCustomer = (employeeId) => {
+            const customerId = document.getElementById('customer-select').value;
+            const employeeDocRef = doc(db, 'employees', employeeId);
+            updateDoc(employeeDocRef, {
+                customerId: customerId
+            }).then(() => {
+                alert('Klant succesvol toegewezen.');
+                window.location.reload(); // Herlaad om bijgewerkte gegevens weer te geven
+            }).catch((error) => {
+                console.error('Fout bij het toewijzen van klant:', error);
+                alert('Er is een fout opgetreden bij het toewijzen van de klant: ' + error.message);
+            });
+        }
     </script>
     <style>
         body {
@@ -91,7 +116,7 @@
         .dashboard-box p, .dashboard-box label {
             color: #d4d4d4;
         }
-        .dashboard-box input, .dashboard-box button {
+        .dashboard-box select, .dashboard-box button {
             width: 100%;
             padding: 10px;
             margin: 5px 0;
@@ -106,39 +131,14 @@
         .dashboard-box button:hover {
             background-color: #45a049;
         }
-        .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"] {
-            background-color: #3a3a3a;
-            color: white;
-        }
-        .dashboard-box meter {
-            width: 100%;
-        }
-        .dashboard-box .actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
-    <div class="dashboard-box" id="employee-list-box">
-        <h2>Werknemers</h2>
+    <div class="dashboard-box">
+        <h2>Klant Toewijzen</h2>
+        <label for="customer-select">Selecteer Klant:</label>
+        <select id="customer-select"></select>
         <div id="employee-list"></div>
-    </div>
-
-    <div class="dashboard-box" id="hours-summary-box">
-        <h2>Geregistreerde Uren (Week)</h2>
-        <div id="employee-hours-summary"></div>
-    </div>
-
-    <div class="dashboard-box" id="employee-dashboard-box">
-        <h2>Werknemer Dashboard</h2>
-        <div id="employee-dashboard"></div>
-    </div>
-
-    <div class="dashboard-box" id="employee-agenda-box">
-        <h2>Werk Agenda</h2>
-        <div id="employee-calendar"></div>
     </div>
 </body>
 </html>
