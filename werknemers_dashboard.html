@@ -25,35 +25,34 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-h
-        // Controleer of gebruiker is ingelogd
-onAuthStateChanged(auth, user => {
-    if (user) {
-        console.log('Gebruiker ingelogd:', user);
-        // Haal gegevens op voor de ingelogde werknemer
-        const userDocRef = doc(db, 'employees', user.uid);
-        getDoc(userDocRef).then(doc => {
-            if (doc.exists) {
-                const data = doc.data();
-                document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
-                document.getElementById('employee-email').textContent = data.Email;
-                document.getElementById('employee-address').textContent = data.Adress;
-                document.getElementById('employee-city').textContent = data.City;
-                document.getElementById('employee-postal').textContent = data.PostalCode;
-                document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
-            } else {
-                console.log('Geen gegevens gevonden voor deze gebruiker');
-            }
-        }).catch((error) => {
-            console.error('Fout bij het ophalen van de gebruikersgegevens:', error);
-        });
-        loadLoggedHours(user.uid);
-    } else {
-        console.log('Geen gebruiker ingelogd.');
-        window.location.href = 'werknemers_login.html';
-    }
-});
 
+        // Controleer of gebruiker is ingelogd
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                console.log('Gebruiker ingelogd:', user);
+                // Haal gegevens op voor de ingelogde werknemer
+                const userDocRef = doc(db, 'employees', user.uid);
+                getDoc(userDocRef).then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
+                        document.getElementById('employee-email').textContent = data.Email;
+                        document.getElementById('employee-address').textContent = data.Adress;
+                        document.getElementById('employee-city').textContent = data.City;
+                        document.getElementById('employee-postal').textContent = data.PostalCode;
+                        document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
+                    } else {
+                        console.log('Geen gegevens gevonden voor deze gebruiker');
+                    }
+                }).catch((error) => {
+                    console.error('Fout bij het ophalen van de gebruikersgegevens:', error);
+                });
+                loadLoggedHours(user.uid);
+            } else {
+                console.log('Geen gebruiker ingelogd.');
+                window.location.href = 'werknemers_login.html';
+            }
+        });
 
         // Functie voor urenregistratie
         document.getElementById('hours-form').addEventListener('submit', function(e) {
@@ -97,34 +96,100 @@ onAuthStateChanged(auth, user => {
             const breakHours = breakTime / 60; // pauzetijd in uren
             return diff - breakHours;
         }
-        
-       // Functie om geregistreerde uren op te halen
-    function loadLoggedHours(userId) {
-    const q = query(collection(db, 'hours'), where('userId', '==', userId));
-    getDocs(q).then(querySnapshot => {
-        const hoursLogged = document.getElementById('hours-logged');
-        hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-        querySnapshot.forEach(doc => {
-            const hours = doc.data();
-            const hoursItem = document.createElement('div');
-            hoursItem.textContent = `Dag: ${hours.day}, Starttijd: ${hours.startTime}, Eindtijd: ${hours.endTime}, Pauzetijd: ${hours.breakTime} minuten, Gewerkte uren: ${hours.hoursWorked}`;
-            hoursLogged.appendChild(hoursItem);
-        });
-    }).catch((error) => {
-        console.error('Fout bij het ophalen van de geregistreerde uren:', error);
-    });
-}
 
-
-        // Placeholder functie voor agenda
-        function loadAgenda() {
-            alert('Agenda Functie - Nog niet geïmplementeerd');
+        // Functie om geregistreerde uren op te halen
+        function loadLoggedHours(userId) {
+            const q = query(collection(db, 'hours'), where('userId', '==', userId));
+            getDocs(q).then(querySnapshot => {
+                const hoursLogged = document.getElementById('hours-logged');
+                hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
+                querySnapshot.forEach(doc => {
+                    const hours = doc.data();
+                    const hoursItem = document.createElement('div');
+                    hoursItem.textContent = `Dag: ${hours.day}, Starttijd: ${hours.startTime}, Eindtijd: ${hours.endTime}, Pauzetijd: ${hours.breakTime} minuten, Gewerkte uren: ${hours.hoursWorked}`;
+                    hoursLogged.appendChild(hoursItem);
+                });
+            }).catch((error) => {
+                console.error('Fout bij het ophalen van de geregistreerde uren:', error);
+            });
         }
 
+        // Functie om de agenda te laden
+        function loadCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    getDocs(collection(db, 'events')).then(querySnapshot => {
+                        const events = [];
+                        querySnapshot.forEach(doc => {
+                            const data = doc.data();
+                            events.push({
+                                title: data.title,
+                                start: data.start,
+                                end: data.end,
+                                backgroundColor: getColor(data.employeeId),
+                                borderColor: getColor(data.employeeId)
+                            });
+                        });
+                        successCallback(events);
+                    }).catch(error => {
+                        console.error('Fout bij het ophalen van events:', error);
+                        failureCallback(error);
+                    });
+                }
+            });
+            calendar.render();
+        }
+
+        // Functie om kleuren toe te wijzen aan werknemers
+        function getColor(employeeId) {
+            const colors = [
+                '#FF5733', '#33FF57', '#3357FF', '#F33FFF', '#FF33A1', '#33FFF5', '#FF8F33', '#33FF8F'
+            ];
+            const index = employeeId.charCodeAt(0) % colors.length;
+            return colors[index];
+        }
+
+        // Functie voor vrije dagen aanvragen
+        document.getElementById('leave-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (user) {
+                const startDay = document.getElementById('leave-start-day').value;
+                const endDay = document.getElementById('leave-end-day').value;
+                const startTime = document.getElementById('leave-start-time').value || '00:00';
+                const endTime = document.getElementById('leave-end-time').value || '23:59';
+                const description = document.getElementById('leave-description').value;
+
+                addDoc(collection(db, 'events'), {
+                    title: 'Vrije dag',
+                    start: `${startDay}T${startTime}:00`,
+                    end: `${endDay}T${endTime}:00`,
+                    description: description,
+                    employeeId: user.uid
+                })
+                .then(() => {
+                    console.log('Vrije dag succesvol aangevraagd');
+                    alert('Vrije dag succesvol aangevraagd');
+                    document.getElementById('leave-form').reset();
+                    loadCalendar(); // Herlaad de agenda
+                })
+                .catch((error) => {
+                    console.error('Fout bij het aanvragen van vrije dag:', error);
+                    alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
+                });
+            } else {
+                alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
+            }
+        });
+
+        // Laad de agenda bij het laden van de pagina
         document.addEventListener("DOMContentLoaded", function() {
             onAuthStateChanged(auth, user => {
                 if (user) {
                     loadLoggedHours(user.uid);
+                    loadCalendar();
                 }
             });
         });
@@ -224,6 +289,34 @@ onAuthStateChanged(auth, user => {
             <button onclick="previousWeek()">Vorige Week</button>
             <button onclick="nextWeek()">Volgende Week</button>
         </div>
+    
+        <div class="dashboard-box" id="leave-request-box">
+    <h2>Vrije Dag Aanvragen</h2>
+    <form id="leave-form">
+        <div>
+            <label for="leave-start-day">Startdag:</label>
+            <input type="date" id="leave-start-day" required>
+        </div>
+        <div>
+            <label for="leave-end-day">Einddag:</label>
+            <input type="date" id="leave-end-day" required>
+        </div>
+        <div>
+            <label for="leave-start-time">Starttijd:</label>
+            <input type="time" id="leave-start-time">
+        </div>
+        <div>
+            <label for="leave-end-time">Eindtijd:</label>
+            <input type="time" id="leave-end-time">
+        </div>
+        <div>
+            <label for="leave-description">Beschrijving:</label>
+            <input type="text" id="leave-description">
+        </div>
+        <button type="submit">Vrije Dag Aanvragen</button>
+    </form>
+</div>
+    
     </div>
 
     <div class="dashboard-box" id="agenda-box">
