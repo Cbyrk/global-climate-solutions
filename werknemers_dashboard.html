@@ -33,10 +33,12 @@
                 db.collection('employees').doc(user.uid).get().then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        document.getElementById('total-hours').textContent = data.totalHours || 0;
-                        document.getElementById('total-earnings').textContent = `€${data.totalEarnings || 0}`;
-                        document.getElementById('hourly-rate').textContent = `€${data.hourlyRate || 0}`;
-                        document.getElementById('week-progress').value = data.weekProgress || 0;
+                        document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
+                        document.getElementById('employee-email').textContent = data.Email;
+                        document.getElementById('employee-address').textContent = data.Address;
+                        document.getElementById('employee-city').textContent = data.City;
+                        document.getElementById('employee-postal').textContent = data.PostalCode;
+                        document.getElementById('employee-hourly-rate').textContent = `€${data.HourlyRate}`;
                     } else {
                         console.log('Geen gegevens gevonden voor deze gebruiker');
                     }
@@ -88,24 +90,6 @@
             const breakHours = breakTime / 60; // pauzetijd in uren
             return diff - breakHours;
         }
-
-        // Functie om zichtbaarheid te togglen
-        function toggleVisibility(id) {
-            const elem = document.getElementById(id);
-            const button = elem.nextElementSibling;
-            if (elem.style.display === 'none') {
-                elem.style.display = 'inline';
-                button.innerHTML = '<img src="https://raw.githubusercontent.com/Cbyrk/global-climate-solutions/main/eye_visible.png" alt="Verberg">';
-            } else {
-                elem.style.display = 'none';
-                button.innerHTML = '<img src="https://raw.githubusercontent.com/Cbyrk/global-climate-solutions/main/eye_hidden.png" alt="Toon">';
-            }
-        }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById('total-earnings').style.display = 'none';
-            document.getElementById('hourly-rate').style.display = 'none';
-        });
     </script>
     <style>
         body {
@@ -172,15 +156,14 @@
     </style>
 </head>
 <body>
-    <div class="dashboard-box" id="earnings-box">
-        <h2>Verdiensten</h2>
-        <p>Totale uren deze week: <span id="total-hours">0</span></p>
-        <p>Verdiend bedrag: <span id="total-earnings">€0</span> <button class="icon-button" onclick="toggleVisibility('total-earnings')"><img src="https://raw.githubusercontent.com/Cbyrk/global-climate-solutions/main/eye_hidden.png" alt="Toon"></button></p>
-        <p>Uurtarief: <span id="hourly-rate">€20</span> <button class="icon-button" onclick="toggleVisibility('hourly-rate')"><img src="https://raw.githubusercontent.com/Cbyrk/global-climate-solutions/main/eye_hidden.png" alt="Toon"></button></p>
-        <div>
-            <label for="week-progress">Werkweek voortgang:</label>
-            <meter id="week-progress" value="0" min="0" max="40"></meter>
-        </div>
+    <div class="dashboard-box" id="employee-info-box">
+        <h2>Werknemer Gegevens</h2>
+        <p>Naam: <span id="employee-name"></span></p>
+        <p>Email: <span id="employee-email"></span></p>
+        <p>Adres: <span id="employee-address"></span></p>
+        <p>Stad: <span id="employee-city"></span></p>
+        <p>Postcode: <span id="employee-postal"></span></p>
+        <p>Uurtarief: <span id="employee-hourly-rate"></span></p>
     </div>
 
     <div class="dashboard-box" id="hours-register-box">
@@ -201,4 +184,40 @@
             <div>
                 <label for="break-time">Pauzetijd (minuten):</label>
                 <input type="number" id="break-time" min="0" value="0">
-            </div
+            </div>
+            <button type="submit">Uren Registreren</button>
+        </form>
+    </div>
+
+    <div class="dashboard-box" id="hours-logged-box">
+        <h2>Geregistreerde Uren</h2>
+        <div id="hours-logged"></div>
+        <div class="actions">
+            <button onclick="previousWeek()">Vorige Week</button>
+            <button onclick="nextWeek()">Volgende Week</button>
+        </div>
+    </div>
+
+    <div class="dashboard-box" id="agenda-box">
+        <h2>Werk Agenda</h2>
+        <div id="calendar"></div>
+        <button onclick="addEvent()">Event Toevoegen</button>
+    </div>
+
+    <script>
+        // Placeholder functie voor agenda
+        function addEvent() {
+            alert('Event Toevoegen - Functie nog niet geïmplementeerd');
+        }
+
+        // Placeholder functie voor week navigatie
+        function previousWeek() {
+            alert('Vorige Week - Functie nog niet geïmplementeerd');
+        }
+
+        function nextWeek() {
+            alert('Volgende Week - Functie nog niet geïmplementeerd');
+        }
+    </script>
+</body>
+</html
