@@ -58,6 +58,7 @@
             const q = query(collection(db, 'projects'), where('customerId', '==', customerId));
             getDocs(q).then(querySnapshot => {
                 const projectList = document.getElementById('project-list');
+                projectList.innerHTML = ''; // Leeg de lijst voor nieuwe items
                 querySnapshot.forEach(doc => {
                     const project = doc.data();
                     const projectItem = document.createElement('div');
@@ -72,6 +73,7 @@
             const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
             getDocs(q).then(querySnapshot => {
                 const employeeList = document.getElementById('employee-list');
+                employeeList.innerHTML = ''; // Leeg de lijst voor nieuwe items
                 querySnapshot.forEach(doc => {
                     const employee = doc.data();
                     const employeeItem = document.createElement('div');
@@ -90,6 +92,7 @@
             const q = query(collection(db, 'hours'), where('userId', '==', employeeId));
             getDocs(q).then(querySnapshot => {
                 const hoursLogged = document.getElementById(`hours-${employeeId}`);
+                hoursLogged.innerHTML = ''; // Leeg de lijst voor nieuwe items
                 querySnapshot.forEach(doc => {
                     const hours = doc.data();
                     const hoursItem = document.createElement('div');
