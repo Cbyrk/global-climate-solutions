@@ -38,9 +38,9 @@
                         document.getElementById('hourly-rate').textContent = `€${data.hourlyRate || 0}`;
                         document.getElementById('week-progress').value = data.weekProgress || 0;
 
-                        // Standaard verborgen
-                        document.getElementById('total-earnings').style.display = 'none';
-                        document.getElementById('hourly-rate').style.display = 'none';
+                        // Verberg uurtarief en verdiende bedrag bij het laden van de pagina
+                        toggleVisibility('total-earnings');
+                        toggleVisibility('hourly-rate');
                     } else {
                         console.log('Geen gegevens gevonden voor deze gebruiker');
                     }
@@ -99,10 +99,10 @@
             const button = elem.nextElementSibling;
             if (elem.style.display === 'none') {
                 elem.style.display = 'inline';
-                button.innerHTML = '&#128065;';
+                button.src = 'https://your-image-url-for-show.png';
             } else {
                 elem.style.display = 'none';
-                button.innerHTML = '&#128064;';
+                button.src = 'https://your-image-url-for-hide.png';
             }
         }
     </script>
@@ -162,9 +162,11 @@
             background: none;
             border: none;
             cursor: pointer;
-            color: #4CAF50;
-            font-size: 16px;
-            margin-left: 10px;
+        }
+        .icon-button img {
+            width: 20px;
+            height: 20px;
+            filter: invert(42%) sepia(95%) saturate(4267%) hue-rotate(327deg) brightness(99%) contrast(105%);
         }
     </style>
 </head>
@@ -172,8 +174,8 @@
     <div class="dashboard-box" id="earnings-box">
         <h2>Verdiensten</h2>
         <p>Totale uren deze week: <span id="total-hours">0</span></p>
-        <p>Verdiend bedrag: <span id="total-earnings">€0</span> <button class="icon-button" onclick="toggleVisibility('total-earnings')">&#128065;</button></p>
-        <p>Uurtarief: <span id="hourly-rate">€20</span> <button class="icon-button" onclick="toggleVisibility('hourly-rate')">&#128065;</button></p>
+        <p>Verdiend bedrag: <span id="total-earnings">€0</span> <button class="icon-button" onclick="toggleVisibility('total-earnings')"><img src="https://your-image-url-for-hide.png" alt="Toggle visibility"></button></p>
+        <p>Uurtarief: <span id="hourly-rate">€20</span> <button class="icon-button" onclick="toggleVisibility('hourly-rate')"><img src="https://your-image-url-for-hide.png" alt="Toggle visibility"></button></p>
         <div>
             <label for="week-progress">Werkweek voortgang:</label>
             <meter id="week-progress" value="0" min="0" max="40"></meter>
@@ -205,11 +207,4 @@
 
     <div class="dashboard-box" id="hours-logged-box">
         <h2>Geregistreerde Uren</h2>
-        <div id="hours-logged"></div>
-        <div class="actions">
-            <button onclick="previousWeek()">Vorige Week</button>
-            <button onclick="nextWeek()">Volgende Week</button>
-        </div>
-    </div>
-
-    <div class="dashboard
+        <div id="hours
