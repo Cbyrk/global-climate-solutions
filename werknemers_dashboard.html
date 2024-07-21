@@ -25,32 +25,35 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
+h
         // Controleer of gebruiker is ingelogd
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                console.log('Gebruiker ingelogd:', user);
-                // Haal gegevens op voor de ingelogde werknemer
-                const userDocRef = doc(db, 'employees', user.uid);
-                getDoc(userDocRef).then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
-                        document.getElementById('employee-email').textContent = data.Email;
-                        document.getElementById('employee-address').textContent = data.Adress;
-                        document.getElementById('employee-city').textContent = data.City;
-                        document.getElementById('employee-postal').textContent = data.PostalCode;
-                        document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
-                    } else {
-                        console.log('Geen gegevens gevonden voor deze gebruiker');
-                    }
-                });
-                loadLoggedHours(user.uid);
+onAuthStateChanged(auth, user => {
+    if (user) {
+        console.log('Gebruiker ingelogd:', user);
+        // Haal gegevens op voor de ingelogde werknemer
+        const userDocRef = doc(db, 'employees', user.uid);
+        getDoc(userDocRef).then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
+                document.getElementById('employee-email').textContent = data.Email;
+                document.getElementById('employee-address').textContent = data.Adress;
+                document.getElementById('employee-city').textContent = data.City;
+                document.getElementById('employee-postal').textContent = data.PostalCode;
+                document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
             } else {
-                console.log('Geen gebruiker ingelogd.');
-                window.location.href = 'werknemers_login.html';
+                console.log('Geen gegevens gevonden voor deze gebruiker');
             }
+        }).catch((error) => {
+            console.error('Fout bij het ophalen van de gebruikersgegevens:', error);
         });
+        loadLoggedHours(user.uid);
+    } else {
+        console.log('Geen gebruiker ingelogd.');
+        window.location.href = 'werknemers_login.html';
+    }
+});
+
 
         // Functie voor urenregistratie
         document.getElementById('hours-form').addEventListener('submit', function(e) {
@@ -95,20 +98,23 @@
             return diff - breakHours;
         }
         
-        // Functie om geregistreerde uren op te halen
-        function loadLoggedHours(userId) {
-            const q = query(collection(db, 'hours'), where('userId', '==', userId));
-            getDocs(q).then(querySnapshot => {
-                const hoursLogged = document.getElementById('hours-logged');
-                hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-                querySnapshot.forEach(doc => {
-                    const hours = doc.data();
-                    const hoursItem = document.createElement('div');
-                    hoursItem.textContent = `Dag: ${hours.day}, Starttijd: ${hours.startTime}, Eindtijd: ${hours.endTime}, Pauzetijd: ${hours.breakTime} minuten, Gewerkte uren: ${hours.hoursWorked}`;
-                    hoursLogged.appendChild(hoursItem);
-                });
-            });
-        }
+       // Functie om geregistreerde uren op te halen
+    function loadLoggedHours(userId) {
+    const q = query(collection(db, 'hours'), where('userId', '==', userId));
+    getDocs(q).then(querySnapshot => {
+        const hoursLogged = document.getElementById('hours-logged');
+        hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
+        querySnapshot.forEach(doc => {
+            const hours = doc.data();
+            const hoursItem = document.createElement('div');
+            hoursItem.textContent = `Dag: ${hours.day}, Starttijd: ${hours.startTime}, Eindtijd: ${hours.endTime}, Pauzetijd: ${hours.breakTime} minuten, Gewerkte uren: ${hours.hoursWorked}`;
+            hoursLogged.appendChild(hoursItem);
+        });
+    }).catch((error) => {
+        console.error('Fout bij het ophalen van de geregistreerde uren:', error);
+    });
+}
+
 
         // Placeholder functie voor agenda
         function loadAgenda() {
