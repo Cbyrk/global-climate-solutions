@@ -31,15 +31,16 @@
                 console.log('Gebruiker ingelogd:', user);
                 // Haal gegevens op voor de ingelogde klant
                 db.collection('customers').doc(user.uid).get().then(doc => {
-                    if (doc.exists) {
+                    if (doc.exists && doc.data().Role === 'Klant') {
                         const data = doc.data();
-                        document.getElementById('customer-name').textContent = `${data.FirstName} ${data.LastName}`;
-                        document.getElementById('customer-email').textContent = data.Email;
-                        document.getElementById('customer-address').textContent = data.Address;
-                        document.getElementById('customer-city').textContent = data.City;
-                        document.getElementById('customer-postal').textContent = data.PostalCode;
+                        document.getElementById('customer-name').textContent = data['Name Customer'];
+                        document.getElementById('customer-email').textContent = user.email;
                     } else {
-                        console.log('Geen gegevens gevonden voor deze gebruiker');
+                        console.log('Geen gegevens gevonden voor deze gebruiker of gebruiker is geen klant.');
+                        alert('Ongeldige rol. Neem contact op met de beheerder.');
+                        auth.signOut().then(() => {
+                            window.location.href = 'klanten_login.html';
+                        });
                     }
                 });
             } else {
@@ -108,9 +109,6 @@
         <h2>Klant Gegevens</h2>
         <p>Naam: <span id="customer-name"></span></p>
         <p>Email: <span id="customer-email"></span></p>
-        <p>Adres: <span id="customer-address"></span></p>
-        <p>Stad: <span id="customer-city"></span></p>
-        <p>Postcode: <span id="customer-postal"></span></p>
     </div>
 
     <div class="dashboard-box" id="project-info-box">
