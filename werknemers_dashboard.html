@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Dashboard</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
     <script type="module">
         // Firebase configuratie
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
@@ -184,34 +186,16 @@
             }
         });
 
-     // Functie om de agenda te laden
-        function loadCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    getDocs(collection(db, 'events')).then(querySnapshot => {
-                        const events = [];
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            events.push({
-                                title: data.title,
-                                start: data.start,
-                                end: data.end,
-                                backgroundColor: getColor(data.employeeId),
-                                borderColor: getColor(data.employeeId)
-                            });
-                        });
-                        successCallback(events);
-                    }).catch(error => {
-                        console.error('Fout bij het ophalen van events:', error);
-                        failureCallback(error);
-                    });
+        // Laad de agenda bij het laden van de pagina
+        document.addEventListener("DOMContentLoaded", function() {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    loadLoggedHours(user.uid);
+                    loadCalendar();
                 }
             });
-            calendar.render();
-        }
-</script>
+        });
+    </script>
 
 <style>
     body {
