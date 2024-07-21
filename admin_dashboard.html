@@ -9,7 +9,7 @@
         // Firebase configuratie
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, collection, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
@@ -21,16 +21,18 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
+        // Firebase initialiseren
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Controleer of gebruiker is ingelogd
         onAuthStateChanged(auth, user => {
             if (user) {
-                // Controleer of de gebruiker admin is
                 const userDocRef = doc(db, 'employees', user.uid);
                 getDoc(userDocRef).then(doc => {
-                    if (doc.exists && doc.data().Role === 'Admin') {
+                    if (doc.exists && doc.data().role === 'Admin') {
+                        console.log('Admin ingelogd:', user);
                         loadEmployees();
                         loadCustomers();
                     } else {
@@ -44,94 +46,109 @@
             }
         });
 
-        async function loadEmployees() {
-            const employeesSnapshot = await getDocs(collection(db, 'employees'));
-            const employeeSelect = document.getElementById('employee-select');
-            employeesSnapshot.forEach(doc => {
-                const employee = doc.data();
-                const option = document.createElement('option');
-                option.value = doc.id;
-                option.textContent = `${employee.FirstName} ${employee.LastName}`;
-                employeeSelect.appendChild(option);
+        // Functie om werknemers op te halen
+        function loadEmployees() {
+            getDocs(collection(db, 'employees')).then(querySnapshot => {
+                const employeeSelect = document.getElementById('employee-select');
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = `${data.FirstName} ${data.LastName}`;
+                    employeeSelect.appendChild(option);
+                });
             });
         }
 
-        async function loadCustomers() {
-            const customersSnapshot = await getDocs(collection(db, 'customers'));
-            const customerSelect = document.getElementById('customer-select');
-            customersSnapshot.forEach(doc => {
-                const customer = doc.data();
-                const option = document.createElement('option');
-                option.value = doc.id;
-                option.textContent = customer['Customer Name'];
-                customerSelect.appendChild(option);
+        // Functie om klanten op te halen
+        function loadCustomers() {
+            getDocs(collection(db, 'customers')).then(querySnapshot => {
+                const customerSelect = document.getElementById('customer-select');
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = data['Customer Name'];
+                    customerSelect.appendChild(option);
+                });
             });
         }
 
-        async function assignEmployeeToCustomer(event) {
-            event.preventDefault();
+        // Functie om werknemer aan klant toe te wijzen
+        document.getElementById('assign-form').addEventListener('submit', function(e) {
+            e.preventDefault();
             const employeeId = document.getElementById('employee-select').value;
             const customerId = document.getElementById('customer-select').value;
 
             const employeeDocRef = doc(db, 'employees', employeeId);
-            await updateDoc(employeeDocRef, {
+            updateDoc(employeeDocRef, {
                 customerId: customerId
+            }).then(() => {
+                alert('Werknemer succesvol toegewezen aan klant');
+                document.getElementById('assign-form').reset();
+            }).catch((error) => {
+                console.error('Fout bij het toewijzen van werknemer aan klant:', error);
+                alert('Er is een fout opgetreden bij het toewijzen: ' + error.message);
             });
-
-            alert('Werknemer succesvol toegewezen aan klant.');
-        }
+        });
     </script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #1e1e1e;
-            color: white;
-            margin: 0;
-            padding: 20px;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #121212;
+            margin: 0;
+            font-family: Arial, sans-serif;
         }
-        .dashboard-box {
-            background-color: #2c2c2c;
+        .assign-container {
+            background-color: #333;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 300px;
         }
-        .dashboard-box h2 {
-            margin-top: 0;
-            color: #d4d4d4;
+        .assign-container h1 {
+            color: white;
+            margin-bottom: 20px;
         }
-        .dashboard-box p, .dashboard-box label {
-            color: #d4d4d4;
+        .assign-container label {
+            color: white;
+            display: block;
+            text-align: left;
+            margin-bottom: 5px;
         }
-        .dashboard-box input, .dashboard-box select, .dashboard-box button {
-            width: 100%;
+        .assign-container select, .assign-container button {
+            width: calc(100% - 20px);
             padding: 10px;
-            margin: 5px 0;
+            margin-bottom: 10px;
             border: none;
             border-radius: 5px;
         }
-        .dashboard-box button {
-            background-color: #4CAF50;
+        .assign-container select {
+            background-color: #3a3a3a;
+            color: white;
+        }
+        .assign-container button {
+            background-color: limegreen;
             color: white;
             cursor: pointer;
         }
-        .dashboard-box button:hover {
-            background-color: #45a049;
+        .assign-container button:hover {
+            background-color: darkgreen;
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-box">
-        <h2>Toewijzen van Werknemers aan Klanten</h2>
-        <form onsubmit="assignEmployeeToCustomer(event)">
+    <div class="assign-container">
+        <h1>Toewijzen van Werknemers aan Klanten</h1>
+        <form id="assign-form">
             <label for="employee-select">Selecteer Werknemer:</label>
             <select id="employee-select" required></select>
-
             <label for="customer-select">Selecteer Klant:</label>
             <select id="customer-select" required></select>
-
             <button type="submit">Toewijzen</button>
         </form>
     </div>
