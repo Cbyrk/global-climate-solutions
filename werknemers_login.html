@@ -51,10 +51,9 @@
                             } else {
                                 const customerDocRef = doc(db, 'customers', user.uid);
                                 getDoc(customerDocRef)
-                                    .then((docSnapshot) => {
-                                        if (docSnapshot.exists()) {
-                                            const role = docSnapshot.data().Role;
-                                            console.log('Role:', role);
+                                    .then((customerSnapshot) => {
+                                        if (customerSnapshot.exists()) {
+                                            const role = customerSnapshot.data().Role;
                                             if (role === 'Klant') {
                                                 window.location.href = 'klanten_dashboard.html';
                                             } else {
