@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klant Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
-    <script>
+    <script type="module">
         // Firebase configuratie
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,19 +22,20 @@
         };
 
         // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
         // Controleer of gebruiker is ingelogd
-        auth.onAuthStateChanged(user => {
+        onAuthStateChanged(auth, user => {
             if (user) {
                 console.log('Gebruiker ingelogd:', user);
                 // Haal gegevens op voor de ingelogde klant
-                db.collection('customers').doc(user.uid).get().then(doc => {
+                const userDocRef = doc(db, 'customers', user.uid);
+                getDoc(userDocRef).then(doc => {
                     if (doc.exists && doc.data().Role === 'Klant') {
                         const data = doc.data();
-                        document.getElementById('customer-name').textContent = data['Name Customer'];
+                        document.getElementById('customer-name').textContent = data['Customer Name'];
                         document.getElementById('customer-email').textContent = user.email;
                     } else {
                         console.log('Geen gegevens gevonden voor deze gebruiker of gebruiker is geen klant.');
@@ -48,7 +50,6 @@
                 window.location.href = 'klanten_login.html';
             }
         });
-
     </script>
     <style>
         body {
@@ -136,7 +137,8 @@
         function loadProjects() {
             const user = auth.currentUser;
             if (user) {
-                db.collection('projects').where('customerId', '==', user.uid).get().then(querySnapshot => {
+                const q = query(collection(db, 'projects'), where('customerId', '==', user.uid));
+                getDocs(q).then(querySnapshot => {
                     const projectList = document.getElementById('project-list');
                     querySnapshot.forEach(doc => {
                         const project = doc.data();
@@ -156,7 +158,7 @@
                 const title = document.getElementById('request-title').value;
                 const description = document.getElementById('request-description').value;
 
-                db.collection('requests').add({
+                addDoc(collection(db, 'requests'), {
                     customerId: user.uid,
                     title: title,
                     description: description,
@@ -178,7 +180,7 @@
         });
 
         document.addEventListener("DOMContentLoaded", function() {
-            auth.onAuthStateChanged(user => {
+            onAuthStateChanged(auth, user => {
                 if (user) {
                     loadProjects();
                 }
