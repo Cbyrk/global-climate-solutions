@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Werknemers Dashboard</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"></script>
-    <script>
+    <script type="module">
         // Firebase configuratie
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,16 +22,17 @@
         };
 
         // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
         // Controleer of gebruiker is ingelogd
-        auth.onAuthStateChanged(user => {
+        onAuthStateChanged(auth, user => {
             if (user) {
                 console.log('Gebruiker ingelogd:', user);
                 // Haal gegevens op voor de ingelogde werknemer
-                db.collection('employees').doc(user.uid).get().then(doc => {
+                const userDocRef = doc(db, 'employees', user.uid);
+                getDoc(userDocRef).then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
                         document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
@@ -61,7 +63,7 @@
                 const breakTime = document.getElementById('break-time').value;
                 const hoursWorked = calculateHours(startTime, endTime, breakTime);
 
-                db.collection('hours').add({
+                addDoc(collection(db, 'hours'), {
                     userId: user.uid,
                     day: day,
                     startTime: startTime,
@@ -95,7 +97,8 @@
         
         // Functie om geregistreerde uren op te halen
         function loadLoggedHours(userId) {
-            db.collection('hours').where('userId', '==', userId).get().then(querySnapshot => {
+            const q = query(collection(db, 'hours'), where('userId', '==', userId));
+            getDocs(q).then(querySnapshot => {
                 const hoursLogged = document.getElementById('hours-logged');
                 hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
                 querySnapshot.forEach(doc => {
@@ -107,13 +110,13 @@
             });
         }
 
-        // Functie voor agenda
+        // Placeholder functie voor agenda
         function loadAgenda() {
             alert('Agenda Functie - Nog niet geïmplementeerd');
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            auth.onAuthStateChanged(user => {
+            onAuthStateChanged(auth, user => {
                 if (user) {
                     loadLoggedHours(user.uid);
                 }
