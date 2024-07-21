@@ -184,15 +184,33 @@
             }
         });
 
-       // Laad de agenda bij het laden van de pagina
-document.addEventListener("DOMContentLoaded", function() {
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            loadLoggedHours(user.uid);
-            loadCalendar();
+     // Functie om de agenda te laden
+        function loadCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    getDocs(collection(db, 'events')).then(querySnapshot => {
+                        const events = [];
+                        querySnapshot.forEach(doc => {
+                            const data = doc.data();
+                            events.push({
+                                title: data.title,
+                                start: data.start,
+                                end: data.end,
+                                backgroundColor: getColor(data.employeeId),
+                                borderColor: getColor(data.employeeId)
+                            });
+                        });
+                        successCallback(events);
+                    }).catch(error => {
+                        console.error('Fout bij het ophalen van events:', error);
+                        failureCallback(error);
+                    });
+                }
+            });
+            calendar.render();
         }
-    });
-});
 </script>
 
 <style>
@@ -203,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function() {
         margin: 0;
         padding: 20px;
         display: grid;
-        grid-template-columns: 1fr 2fr;
+        grid-template-columns: 1fr 1fr;
         grid-template-rows: auto auto;
         gap: 20px;
     }
@@ -246,10 +264,6 @@ document.addEventListener("DOMContentLoaded", function() {
         display: flex;
         justify-content: space-between;
         margin-top: 10px;
-    }
-    #calendar {
-        max-width: 100%;
-        margin: 0 auto;
     }
 </style>
 </head>
@@ -323,7 +337,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </form>
     </div>
 
-    <div class="dashboard-box" id="agenda-box" style="grid-column: span 2;">
+    <div class="dashboard-box" id="agenda-box">
         <h2>Gezamenlijke Agenda</h2>
         <div id="calendar"></div>
         <div>
