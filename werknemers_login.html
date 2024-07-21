@@ -36,12 +36,14 @@
                     const userDocRef = doc(db, 'employees', user.uid);
 
                     getDoc(userDocRef).then((doc) => {
-                        if (doc.exists()) {
+                        if (doc.exists) {
                             const role = doc.data().Role;
                             if (role === 'Werknemer') {
                                 window.location.href = 'werknemers_dashboard.html';
                             } else if (role === 'Admin') {
                                 window.location.href = 'admin_dashboard.html';
+                            } else if (role === 'Klant') {
+                                window.location.href = 'klant_dashboard.html';
                             } else {
                                 alert('Ongeldige rol. Neem contact op met de beheerder.');
                             }
