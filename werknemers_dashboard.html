@@ -99,10 +99,10 @@
             const button = elem.nextElementSibling;
             if (elem.style.display === 'none') {
                 elem.style.display = 'inline';
-                button.src = 'https://your-image-url-for-show.png';
+                button.src = 'https://github.com/Cbyrk/global-climate-solutions/raw/main/show.png'; // Pas deze URL aan naar de zichtbaarheid tonen afbeelding
             } else {
                 elem.style.display = 'none';
-                button.src = 'https://your-image-url-for-hide.png';
+                button.src = 'https://github.com/Cbyrk/global-climate-solutions/raw/main/hide.png'; // Pas deze URL aan naar de zichtbaarheid verbergen afbeelding
             }
         }
     </script>
@@ -174,8 +174,8 @@
     <div class="dashboard-box" id="earnings-box">
         <h2>Verdiensten</h2>
         <p>Totale uren deze week: <span id="total-hours">0</span></p>
-        <p>Verdiend bedrag: <span id="total-earnings">€0</span> <button class="icon-button" onclick="toggleVisibility('total-earnings')"><img src="https://your-image-url-for-hide.png" alt="Toggle visibility"></button></p>
-        <p>Uurtarief: <span id="hourly-rate">€20</span> <button class="icon-button" onclick="toggleVisibility('hourly-rate')"><img src="https://your-image-url-for-hide.png" alt="Toggle visibility"></button></p>
+        <p>Verdiend bedrag: <span id="total-earnings">€0</span> <button class="icon-button" onclick="toggleVisibility('total-earnings')"><img src="https://github.com/Cbyrk/global-climate-solutions/raw/main/hide.png" alt="Toggle visibility"></button></p>
+        <p>Uurtarief: <span id="hourly-rate">€20</span> <button class="icon-button" onclick="toggleVisibility('hourly-rate')"><img src="https://github.com/Cbyrk/global-climate-solutions/raw/main/hide.png" alt="Toggle visibility"></button></p>
         <div>
             <label for="week-progress">Werkweek voortgang:</label>
             <meter id="week-progress" value="0" min="0" max="40"></meter>
@@ -205,6 +205,4 @@
         </form>
     </div>
 
-    <div class="dashboard-box" id="hours-logged-box">
-        <h2>Geregistreerde Uren</h2>
-        <div id="hours
+    <div class
