@@ -6,11 +6,12 @@
     <title>Werknemers Login</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module">
-        // Firebase configuratie
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
             authDomain: "register-employee-gcs.firebaseapp.com",
@@ -21,49 +22,47 @@
             measurementId: "G-Q68YZMSFJX"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        function loginEmployee() {
+        window.loginEmployee = (event) => {
+            event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const errorMessageElement = document.getElementById('error-message');
 
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-                    console.log('Ingelogd als:', user);
                     const userDocRef = doc(db, 'employees', user.uid);
-
-                    getDoc(userDocRef).then((doc) => {
-                        if (doc.exists()) {
-                            const role = doc.data().Role;
-                            console.log('Gebruikersrol:', role);
-                            if (role === 'Werknemer') {
-                                console.log('Doorverwijzen naar werknemers_dashboard.html');
-                                window.location.href = 'werknemers_dashboard.html';
-                            } else if (role === 'Admin') {
-                                console.log('Doorverwijzen naar admin_dashboard.html');
-                                window.location.href = 'admin_dashboard.html';
-                            } else if (role === 'Klant') {
-                                console.log('Doorverwijzen naar klanten_dashboard.html');
-                                window.location.href = 'klanten_dashboard.html';
+                    getDoc(userDocRef)
+                        .then((docSnapshot) => {
+                            if (docSnapshot.exists()) {
+                                const role = docSnapshot.data().Role;
+                                console.log('Role:', role); // Voeg deze regel toe voor debugging
+                                if (role === 'Werknemer') {
+                                    window.location.href = 'werknemers_dashboard.html';
+                                } else if (role === 'Admin') {
+                                    window.location.href = 'admin_dashboard.html';
+                                } else {
+                                    alert('Ongeldige rol. Neem contact op met de beheerder.');
+                                }
                             } else {
-                                alert('Ongeldige rol. Neem contact op met de beheerder.');
+                                alert('Gebruikersgegevens niet gevonden.');
                             }
-                        } else {
-                            alert('Gebruikersgegevens niet gevonden.');
-                        }
-                    });
+                        });
                 })
                 .catch((error) => {
                     console.error('Fout bij inloggen:', error);
-                    errorMessageElement.textContent = 'Onjuist e-mailadres of wachtwoord. Probeer het opnieuw.';
-                    errorMessageElement.style.display = 'block';
+                    if (error.code === 'auth/wrong-password') {
+                        document.getElementById('password').style.borderColor = 'red';
+                    } else if (error.code === 'auth/user-not-found') {
+                        document.getElementById('email').style.borderColor = 'red';
+                    } else {
+                        alert('Fout bij inloggen: ' + error.message);
+                    }
                 });
-
-            return false;
         }
     </script>
     <style>
@@ -106,6 +105,15 @@
             border: none;
             border-radius: 5px;
         }
+        .login-container input[type="email"], .login-container input[type="password"] {
+            background-color: #3a3a3a;
+            color: white;
+            border: 1px solid #3a3a3a;
+        }
+        .login-container input[type="email"]:focus, .login-container input[type="password"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
         .login-container button {
             width: 100%;
             padding: 10px;
@@ -122,14 +130,17 @@
             display: none;
             color: red;
             margin-top: 10px;
+            border-radius: 5px;
+            padding: 5px;
+            background-color: #ffdddd;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <img src="gcs_logo_final_enhanced_v5.jpg" alt="GCS Logo">
+        <img src="https://github.com/Cbyrk/global-climate-solutions/blob/main/gcs_logo_final_enhanced_v5.jpg" alt="GCS Logo">
         <h1>Werknemers Login</h1>
-        <form onsubmit="return loginEmployee()">
+        <form onsubmit="loginEmployee(event)">
             <label for="email">E-mail:</label>
             <input type="email" id="email" name="email" required>
             <label for="password">Wachtwoord:</label>
