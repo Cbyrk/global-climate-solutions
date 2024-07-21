@@ -28,20 +28,23 @@
         // Controleer of gebruiker is ingelogd
         auth.onAuthStateChanged(user => {
             if (user) {
-                console.log('Gebruiker ingelogd:', user);
+                console.log('Gebruiker ingelogd:', user.uid);
                 // Haal gegevens op voor de ingelogde werknemer
                 db.collection('employees').doc(user.uid).get().then(doc => {
                     if (doc.exists) {
                         const data = doc.data();
-                        document.getElementById('employee-name').textContent = `${data.firstName} ${data.lastName}`;
-                        document.getElementById('employee-email').textContent = data.email;
-                        document.getElementById('employee-address').textContent = data.adress;
-                        document.getElementById('employee-city').textContent = data.city;
-                        document.getElementById('employee-postcode').textContent = data.postalCode;
-                        document.getElementById('employee-hourly-rate').textContent = `€${data.hourlyRate || 0}`;
+                        console.log('Werknemer gegevens:', data);
+                        document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
+                        document.getElementById('employee-email').textContent = data.Email;
+                        document.getElementById('employee-address').textContent = data.Adress;
+                        document.getElementById('employee-city').textContent = data.City;
+                        document.getElementById('employee-postcode').textContent = data.PostalCode;
+                        document.getElementById('employee-hourly-rate').textContent = `€${data.HourlyRate || 0}`;
                     } else {
                         console.log('Geen gegevens gevonden voor deze gebruiker');
                     }
+                }).catch(error => {
+                    console.error('Fout bij het ophalen van werknemer gegevens:', error);
                 });
             } else {
                 console.log('Geen gebruiker ingelogd.');
