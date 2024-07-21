@@ -249,6 +249,12 @@
         justify-content: space-between;
         margin-top: 10px;
     }
+    #calendar {
+        background-color: #2c2c2c;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    }
 </style>
 </head>
 <body>
@@ -320,15 +326,11 @@
             <button type="submit">Vrije Dag Aanvragen</button>
         </form>
     </div>
-
+    
     <div class="dashboard-box" id="agenda-box">
-        <h2>Gezamenlijke Agenda</h2>
+        <h2>Werk Agenda</h2>
         <div id="calendar"></div>
-        <div>
-            <p><span style="color: #FF5733;">■</span> Cem</p>
-            <p><span style="color: #33FF57;">■</span> Mehmet Can</p>
-            <p><span style="color: #3357FF;">■</span> Tomris</p>
-        </div>
+        <button onclick="addEvent()">Event Toevoegen</button>
     </div>
 </body>
 </html>
