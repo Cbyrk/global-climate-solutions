@@ -124,8 +124,8 @@ function loadLoggedHours(userId) {
             hoursItem.innerHTML = `
                 <span>${hours.day}</span>
                 <span>${hours.startTime}</span>
-                <span>${hours.endTime}</span>
                 <span>${hours.breakTime} min</span>
+                <span>${hours.endTime}</span>
                 <span>${hours.hoursWorked} uur</span>
             `;
             hoursLogged.appendChild(hoursItem);
@@ -264,12 +264,14 @@ document.addEventListener("DOMContentLoaded", function() {
     .dashboard-box .calendar-container {
         max-width: 100%;
     }
+
+    /* Tabel opmaak */
     .hours-table {
         width: 100%;
         border-collapse: collapse;
     }
     .hours-table th, .hours-table td {
-        border: 1px solid #4CAF50;
+        border: 1px solid #3a3a3a;
         padding: 8px;
         text-align: left;
     }
@@ -278,10 +280,12 @@ document.addEventListener("DOMContentLoaded", function() {
         color: white;
     }
     .hours-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 0;
-        border-bottom: 1px solid #ccc;
+        display: table-row;
+    }
+    .hours-item span {
+        display: table-cell;
+        padding: 8px;
+        border: 1px solid #3a3a3a;
     }
 </style>
 </head>
@@ -321,16 +325,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
     <div class="dashboard-box" id="hours-logged-box">
         <h2>Geregistreerde Uren</h2>
-        <div class="hours-table">
-            <div class="hours-item">
-                <span>Datum</span>
-                <span>Begintijd</span>
-                <span>Eindtijd</span>
-                <span>Pauze (min)</span>
-                <span>Gewerkte uren</span>
-            </div>
-            <div id="hours-logged"></div>
-        </div>
+        <table class="hours-table">
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Begin Tijd</th>
+                    <th>Pauze in Minuten</th>
+                    <th>Eind Tijd</th>
+                    <th>Totaal Uur</th>
+                </tr>
+            </thead>
+            <tbody id="hours-logged">
+            </tbody>
+        </table>
         <div class="actions">
             <button onclick="previousWeek()">Vorige Week</button>
             <button onclick="nextWeek()">Volgende Week</button>
