@@ -265,25 +265,27 @@
     .dashboard-box .calendar-container {
         max-width: 100%;
     }
-    table {
+    .dashboard-box table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 10px;
     }
-    th, td {
-        border: 1px solid #ddd;
+    .dashboard-box table, .dashboard-box th, .dashboard-box td {
+        border: 1px solid #555;
+    }
+    .dashboard-box th, .dashboard-box td {
         padding: 8px;
-        text-align: left;
+        text-align: center;
     }
-    th {
+    .dashboard-box th {
         background-color: #4CAF50;
         color: white;
     }
-    tr:nth-child(even) {
-        background-color: #3a3a3a;
+    .dashboard-box td {
+        background-color: #333;
+        color: white;
     }
-    tr:hover {
-        background-color: #575757;
+    .dashboard-box .rounded-corner {
+        border-radius: 10px;
     }
 </style>
 </head>
@@ -323,7 +325,7 @@
 
     <div class="dashboard-box" id="hours-logged-box">
         <h2>Geregistreerde Uren</h2>
-        <table>
+        <table class="rounded-corner">
             <thead>
                 <tr>
                     <th>Datum</th>
@@ -334,9 +336,7 @@
                     <th>Totaal Uur</th>
                 </tr>
             </thead>
-            <tbody id="hours-logged">
-                <!-- Geregistreerde uren zullen hier worden geladen -->
-            </tbody>
+            <tbody id="hours-logged"></tbody>
         </table>
         <div class="actions">
             <button onclick="previousWeek()">Vorige Week</button>
