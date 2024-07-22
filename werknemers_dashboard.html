@@ -119,14 +119,13 @@
             hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
             querySnapshot.forEach(doc => {
                 const hours = doc.data();
-                const hoursItem = document.createElement('div');
-                hoursItem.className = 'hours-item';
+                const hoursItem = document.createElement('tr');
                 hoursItem.innerHTML = `
-                    <span>${hours.day}</span>
-                    <span>${hours.startTime}</span>
-                    <span>${hours.endTime}</span>
-                    <span>${hours.breakTime} min</span>
-                    <span>${hours.hoursWorked} uur</span>
+                    <td>${hours.day}</td>
+                    <td>${hours.startTime}</td>
+                    <td>${hours.endTime}</td>
+                    <td>${hours.breakTime} min</td>
+                    <td>${hours.hoursWorked} uur</td>
                 `;
                 hoursLogged.appendChild(hoursItem);
             });
@@ -136,79 +135,78 @@
     }
 
     // Functie om de agenda te laden
-    function loadCalendar() {
-        const calendarEl = document.getElementById('calendar');
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            events: function(fetchInfo, successCallback, failureCallback) {
-                getDocs(collection(db, 'events')).then(querySnapshot => {
-                    const events = [];
-                    querySnapshot.forEach(doc => {
-                        const data = doc.data();
-                        events.push({
-                            title: data.title,
-                            start: data.start,
-                            end: data.end,
-                            backgroundColor: employeeColors[data.employeeId],
-                            borderColor: employeeColors[data.employeeId]
-                        });
+function loadCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: function(fetchInfo, successCallback, failureCallback) {
+            getDocs(collection(db, 'events')).then(querySnapshot => {
+                const events = [];
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    events.push({
+                        title: data.title,
+                        start: data.start,
+                        end: data.end,
+                        backgroundColor: employeeColors[data.employeeId],
+                        borderColor: employeeColors[data.employeeId]
                     });
-                    successCallback(events);
-                }).catch(error => {
-                    console.error('Fout bij het ophalen van events:', error);
-                    failureCallback(error);
                 });
-            }
-        });
-        calendar.render();
-    }
-
-    // Functie voor vrije dagen aanvragen
-    document.getElementById('leave-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const user = auth.currentUser;
-        if (user) {
-            const startDay = document.getElementById('leave-start-day').value;
-            const endDay = document.getElementById('leave-end-day').value;
-            const startTime = document.getElementById('leave-start-time').value || '00:00';
-            const endTime = document.getElementById('leave-end-time').value || '23:59';
-            const description = document.getElementById('leave-description').value;
-
-            addDoc(collection(db, 'events'), {
-                title: 'Vrije dag',
-                start: `${startDay}T${startTime}:00`,
-                end: `${endDay}T${endTime}:00`,
-                description: description,
-                employeeId: user.uid
-            })
-            .then(() => {
-                console.log('Vrije dag succesvol aangevraagd');
-                alert('Vrije dag succesvol aangevraagd');
-                document.getElementById('leave-form').reset();
-                loadCalendar(); // Herlaad de agenda
-            })
-            .catch((error) => {
-                console.error('Fout bij het aanvragen van vrije dag:', error);
-                alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
+                successCallback(events);
+            }).catch(error => {
+                console.error('Fout bij het ophalen van events:', error);
+                failureCallback(error);
             });
-        } else {
-            alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
         }
     });
+    calendar.render();
+}
 
-    // Laad de agenda en kleuren bij het laden van de pagina
-    document.addEventListener("DOMContentLoaded", function() {
-        loadEmployeeColors().then(() => {
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    loadLoggedHours(user.uid);
-                    loadCalendar();
-                }
-            });
+// Functie voor vrije dagen aanvragen
+document.getElementById('leave-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (user) {
+        const startDay = document.getElementById('leave-start-day').value;
+        const endDay = document.getElementById('leave-end-day').value;
+        const startTime = document.getElementById('leave-start-time').value || '00:00';
+        const endTime = document.getElementById('leave-end-time').value || '23:59';
+        const description = document.getElementById('leave-description').value;
+
+        addDoc(collection(db, 'events'), {
+            title: 'Vrije dag',
+            start: `${startDay}T${startTime}:00`,
+            end: `${endDay}T${endTime}:00`,
+            description: description,
+            employeeId: user.uid
+        })
+        .then(() => {
+            console.log('Vrije dag succesvol aangevraagd');
+            alert('Vrije dag succesvol aangevraagd');
+            document.getElementById('leave-form').reset();
+            loadCalendar(); // Herlaad de agenda
+        })
+        .catch((error) => {
+            console.error('Fout bij het aanvragen van vrije dag:', error);
+            alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
+        });
+    } else {
+        alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
+    }
+});
+
+// Laad de agenda en kleuren bij het laden van de pagina
+document.addEventListener("DOMContentLoaded", function() {
+    loadEmployeeColors().then(() => {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loadLoggedHours(user.uid);
+                loadCalendar();
+            }
         });
     });
+});
 </script>
-
 
 <style>
     body {
