@@ -111,29 +111,28 @@
         return diff - breakHours;
     }
 
-    // Functie om geregistreerde uren op te halen
-    function loadLoggedHours(userId) {
-        const q = query(collection(db, 'hours'), where('userId', '==', userId));
-        getDocs(q).then(querySnapshot => {
-            const hoursLogged = document.getElementById('hours-logged');
-            hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-            querySnapshot.forEach(doc => {
-                const hours = doc.data();
-                const hoursItem = document.createElement('div');
-                hoursItem.className = 'hours-item';
-                hoursItem.innerHTML = `
-                    <span>${hours.day}</span>
-                    <span>${hours.startTime}</span>
-                    <span>${hours.endTime}</span>
-                    <span>${hours.breakTime} min</span>
-                    <span>${hours.hoursWorked} uur</span>
-                `;
-                hoursLogged.appendChild(hoursItem);
-            });
-        }).catch((error) => {
-            console.error('Fout bij het ophalen van de geregistreerde uren:', error);
+   // Functie om geregistreerde uren op te halen
+function loadLoggedHours(userId) {
+    const q = query(collection(db, 'hours'), where('userId', '==', userId));
+    getDocs(q).then(querySnapshot => {
+        const hoursLogged = document.getElementById('hours-logged');
+        hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
+        querySnapshot.forEach(doc => {
+            const hours = doc.data();
+            const hoursItem = document.createElement('div');
+            hoursItem.className = 'hours-item';
+            hoursItem.innerHTML = `
+                <span>${hours.startTime}</span>
+                <span>${hours.endTime}</span>
+                <span>${hours.breakTime} min</span>
+                <span>${hours.hoursWorked} uur</span>
+            `;
+            hoursLogged.appendChild(hoursItem);
         });
-    }
+    }).catch((error) => {
+        console.error('Fout bij het ophalen van de geregistreerde uren:', error);
+    });
+}
 
     // Functie om de agenda te laden
 function loadCalendar() {
@@ -264,27 +263,24 @@ document.addEventListener("DOMContentLoaded", function() {
     .dashboard-box .calendar-container {
         max-width: 100%;
     }
-    .dashboard-box table {
+    .hours-table {
         width: 100%;
         border-collapse: collapse;
     }
-    .dashboard-box table, .dashboard-box th, .dashboard-box td {
-        border: 1px solid #555;
-    }
-    .dashboard-box th, .dashboard-box td {
+    .hours-table th, .hours-table td {
+        border: 1px solid #4CAF50;
         padding: 8px;
-        text-align: center;
+        text-align: left;
     }
-    .dashboard-box th {
+    .hours-table th {
         background-color: #4CAF50;
         color: white;
     }
-    .dashboard-box td {
-        background-color: #333;
-        color: white;
-    }
-    .dashboard-box .rounded-corner {
-        border-radius: 10px;
+    .hours-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid #ccc;
     }
 </style>
 </head>
@@ -324,19 +320,16 @@ document.addEventListener("DOMContentLoaded", function() {
 
     <div class="dashboard-box" id="hours-logged-box">
         <h2>Geregistreerde Uren</h2>
-        <table class="rounded-corner">
-            <thead>
-                <tr>
-                    <th>Datum</th>
-                    <th>Dag</th>
-                    <th>Begin Tijd</th>
-                    <th>Pauze in Minuten</th>
-                    <th>Eind Tijd</th>
-                    <th>Totaal Uur</th>
-                </tr>
-            </thead>
-            <tbody id="hours-logged"></tbody>
-        </table>
+        <div class="hours-table">
+            <div class="hours-item">
+                <span>Datum</span>
+                <span>Begintijd</span>
+                <span>Eindtijd</span>
+                <span>Pauze (min)</span>
+                <span>Gewerkte uren</span>
+            </div>
+            <div id="hours-logged"></div>
+        </div>
         <div class="actions">
             <button onclick="previousWeek()">Vorige Week</button>
             <button onclick="nextWeek()">Volgende Week</button>
