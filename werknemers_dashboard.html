@@ -122,6 +122,7 @@ function loadLoggedHours(userId) {
             const hoursItem = document.createElement('div');
             hoursItem.className = 'hours-item';
             hoursItem.innerHTML = `
+                <span>${hours.day}</span>
                 <span>${hours.startTime}</span>
                 <span>${hours.endTime}</span>
                 <span>${hours.breakTime} min</span>
