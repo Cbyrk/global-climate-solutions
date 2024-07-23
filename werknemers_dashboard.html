@@ -138,7 +138,7 @@ function loadLoggedHours(userId) {
     });
 }
 
-   // Functie om de agenda te laden
+ // Functie om de agenda te laden
 function loadCalendar() {
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -198,6 +198,51 @@ document.getElementById('leave-form').addEventListener('submit', function(e) {
         alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
     }
 });
+
+// Functie om geregistreerde uren op te halen
+function loadLoggedHours(userId) {
+    const q = query(collection(db, 'hours'), where('userId', '==', userId));
+    getDocs(q).then(querySnapshot => {
+        const hoursLogged = document.getElementById('hours-logged');
+        hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
+        querySnapshot.forEach(doc => {
+            const hours = doc.data();
+            const hoursItem = document.createElement('div');
+            hoursItem.className = 'hours-item';
+            hoursItem.innerHTML = `
+                <span>${hours.day}</span>
+                <span>${hours.startTime}</span>
+                <span>${hours.breakTime} min</span>
+                <span>${hours.endTime}</span>
+                <span>${hours.hoursWorked} uur</span>
+                <span><button class="notitie-btn" data-notitie="${hours.notitie ? hours.notitie : 'Geen notitie'}">Notitie Weergeven</button></span>
+            `;
+            hoursLogged.appendChild(hoursItem);
+        });
+
+        // Voeg event listener toe aan notitie buttons
+        document.querySelectorAll('.notitie-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                showNotitiePopup(this.getAttribute('data-notitie'));
+            });
+        });
+    }).catch((error) => {
+        console.error('Fout bij het ophalen van de geregistreerde uren:', error);
+    });
+}
+
+// Functie om notitie popup te laten zien
+function showNotitiePopup(notitie) {
+    const popup = document.createElement('div');
+    popup.className = 'notitie-popup';
+    popup.innerHTML = `<p>${notitie}</p>`;
+    document.body.appendChild(popup);
+    
+    // Verwijder popup na 5 seconden
+    setTimeout(() => {
+        popup.remove();
+    }, 5000);
+}
 
 // Laad de agenda en kleuren bij het laden van de pagina
 document.addEventListener("DOMContentLoaded", function() {
@@ -267,6 +312,8 @@ document.addEventListener("DOMContentLoaded", function() {
     .dashboard-box .calendar-container {
         max-width: 100%;
     }
+
+    /* Tabel opmaak */
     .hours-table {
         width: 100%;
         border-collapse: collapse;
@@ -287,6 +334,25 @@ document.addEventListener("DOMContentLoaded", function() {
         display: table-cell;
         padding: 8px;
         border: 1px solid #3a3a3a;
+    }
+
+    /* CSS for notitie popup */
+    .notitie-popup {
+        display: none;
+        position: absolute;
+        background-color: #2c2c2c;
+        color: white;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        z-index: 10;
+        width: 300px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .notitie-popup p {
+        margin: 0;
     }
 </style>
 </head>
@@ -321,8 +387,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 <input type="number" id="break-time" min="0" value="0">
             </div>
             <div>
-                <label for="notes">Notities:</label>
-                <textarea id="notes" rows="4" placeholder="Waar heb je aan gewerkt?"></textarea>
+                <label for="notitie">Notities:</label>
+                <textarea id="notitie" placeholder="Waar heb je aan gewerkt?"></textarea>
             </div>
             <button type="submit">Uren Registreren</button>
         </form>
@@ -338,6 +404,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <th>Pauze in Minuten</th>
                     <th>Eind Tijd</th>
                     <th>Totaal Uur</th>
+                    <th>Notitie</th>
                 </tr>
             </thead>
             <tbody id="hours-logged">
@@ -354,4 +421,6 @@ document.addEventListener("DOMContentLoaded", function() {
         <div id="calendar"></div>
     </div>
 </body>
+</html>
+
 </html>
