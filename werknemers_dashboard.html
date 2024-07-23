@@ -210,6 +210,21 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 });
+
+// Functie om notitie pop-up te tonen
+function showNotePopup(noteContent) {
+    const popup = document.getElementById('notes-popup');
+    popup.textContent = noteContent;
+    popup.classList.add('visible');
+}
+
+// Sluit notitie pop-up wanneer er buiten wordt geklikt
+window.onclick = function(event) {
+    const popup = document.getElementById('notes-popup');
+    if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
+        popup.classList.remove('visible');
+    }
+}
 </script>
     
 <style>
@@ -300,6 +315,8 @@ document.addEventListener("DOMContentLoaded", function() {
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         z-index: 100;
         max-width: 300px;
+        max-height: 200px; /* Maximum height for the popup */
+        overflow-y: auto; /* Scroll if the content exceeds the max height */
     }
     .notes-popup.visible {
         display: block;
