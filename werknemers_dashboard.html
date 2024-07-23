@@ -78,6 +78,7 @@
             const endTime = document.getElementById('end-time').value;
             const breakTime = document.getElementById('break-time').value;
             const hoursWorked = calculateHours(startTime, endTime, breakTime);
+            const notes = document.getElementById('notes').value; // Nieuwe notitie veld
 
             addDoc(collection(db, 'hours'), {
                 userId: user.uid,
@@ -85,7 +86,8 @@
                 startTime: startTime,
                 endTime: endTime,
                 breakTime: breakTime,
-                hoursWorked: hoursWorked
+                hoursWorked: hoursWorked,
+                notes: notes // Opslaan van notitie
             })
             .then(() => {
                 console.log('Uren succesvol geregistreerd');
@@ -127,6 +129,7 @@ function loadLoggedHours(userId) {
                 <span>${hours.breakTime} min</span>
                 <span>${hours.endTime}</span>
                 <span>${hours.hoursWorked} uur</span>
+                <span>${hours.notes}</span> <!-- Notitie veld toevoegen -->
             `;
             hoursLogged.appendChild(hoursItem);
         });
@@ -135,7 +138,7 @@ function loadLoggedHours(userId) {
     });
 }
 
-    // Functie om de agenda te laden
+   // Functie om de agenda te laden
 function loadCalendar() {
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -234,7 +237,7 @@ document.addEventListener("DOMContentLoaded", function() {
     .dashboard-box p, .dashboard-box label {
         color: #d4d4d4;
     }
-    .dashboard-box input, .dashboard-box button {
+    .dashboard-box input, .dashboard-box button, .dashboard-box textarea {
         width: 100%;
         padding: 10px;
         margin: 5px 0;
@@ -249,7 +252,7 @@ document.addEventListener("DOMContentLoaded", function() {
     .dashboard-box button:hover {
         background-color: #45a049;
     }
-    .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"] {
+    .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"], .dashboard-box textarea {
         background-color: #3a3a3a;
         color: white;
     }
@@ -264,8 +267,6 @@ document.addEventListener("DOMContentLoaded", function() {
     .dashboard-box .calendar-container {
         max-width: 100%;
     }
-
-    /* Tabel opmaak */
     .hours-table {
         width: 100%;
         border-collapse: collapse;
@@ -319,6 +320,10 @@ document.addEventListener("DOMContentLoaded", function() {
                 <label for="break-time">Pauzetijd (minuten):</label>
                 <input type="number" id="break-time" min="0" value="0">
             </div>
+            <div>
+                <label for="notes">Notities:</label>
+                <textarea id="notes" rows="4" placeholder="Waar heb je aan gewerkt?"></textarea>
+            </div>
             <button type="submit">Uren Registreren</button>
         </form>
     </div>
@@ -342,33 +347,6 @@ document.addEventListener("DOMContentLoaded", function() {
             <button onclick="previousWeek()">Vorige Week</button>
             <button onclick="nextWeek()">Volgende Week</button>
         </div>
-    </div>
-
-    <div class="dashboard-box" id="leave-request-box">
-        <h2>Vrije Dag Aanvragen</h2>
-        <form id="leave-form">
-            <div>
-                <label for="leave-start-day">Startdag:</label>
-                <input type="date" id="leave-start-day" required>
-            </div>
-            <div>
-                <label for="leave-end-day">Einddag:</label>
-                <input type="date" id="leave-end-day" required>
-            </div>
-            <div>
-                <label for="leave-start-time">Starttijd:</label>
-                <input type="time" id="leave-start-time">
-            </div>
-            <div>
-                <label for="leave-end-time">Eindtijd:</label>
-                <input type="time" id="leave-end-time">
-            </div>
-            <div>
-                <label for="leave-description">Beschrijving:</label>
-                <input type="text" id="leave-description">
-            </div>
-            <button type="submit">Vrije Dag Aanvragen</button>
-        </form>
     </div>
 
     <div class="dashboard-box calendar-container" id="agenda-box">
