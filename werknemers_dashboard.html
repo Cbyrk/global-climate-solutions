@@ -113,118 +113,51 @@
         return diff - breakHours;
     }
 
-   // Functie om geregistreerde uren op te halen
-function loadLoggedHours(userId) {
-    const q = query(collection(db, 'hours'), where('userId', '==', userId));
-    getDocs(q).then(querySnapshot => {
-        const hoursLogged = document.getElementById('hours-logged');
-        hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-        querySnapshot.forEach(doc => {
-            const hours = doc.data();
-            const hoursItem = document.createElement('div');
-            hoursItem.className = 'hours-item';
-            hoursItem.innerHTML = `
-                <span>${hours.day}</span>
-                <span>${hours.startTime}</span>
-                <span>${hours.breakTime} min</span>
-                <span>${hours.endTime}</span>
-                <span>${hours.hoursWorked} uur</span>
-                <span class="notes-item" onclick="showNotePopup('${hours.notes ? hours.notes : 'Geen notitie'}')">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
-            `;
-            hoursLogged.appendChild(hoursItem);
-        });
-    }).catch((error) => {
-        console.error('Fout bij het ophalen van de geregistreerde uren:', error);
-    });
-}
-
-// Functie om de agenda te laden
-function loadCalendar() {
-    const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        events: function(fetchInfo, successCallback, failureCallback) {
-            getDocs(collection(db, 'events')).then(querySnapshot => {
-                const events = [];
-                querySnapshot.forEach(doc => {
-                    const data = doc.data();
-                    events.push({
-                        title: data.title,
-                        start: data.start,
-                        end: data.end,
-                        backgroundColor: employeeColors[data.employeeId],
-                        borderColor: employeeColors[data.employeeId]
-                    });
-                });
-                successCallback(events);
-            }).catch(error => {
-                console.error('Fout bij het ophalen van events:', error);
-                failureCallback(error);
+    // Functie om geregistreerde uren op te halen
+    function loadLoggedHours(userId) {
+        const q = query(collection(db, 'hours'), where('userId', '==', userId));
+        getDocs(q).then(querySnapshot => {
+            const hoursLogged = document.getElementById('hours-logged');
+            hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
+            querySnapshot.forEach(doc => {
+                const hours = doc.data();
+                const hoursItem = document.createElement('div');
+                hoursItem.className = 'hours-item';
+                hoursItem.innerHTML = `
+                    <span>${hours.day}</span>
+                    <span>${hours.startTime}</span>
+                    <span>${hours.breakTime} min</span>
+                    <span>${hours.endTime}</span>
+                    <span>${hours.hoursWorked} uur</span>
+                    <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
+                `;
+                hoursLogged.appendChild(hoursItem);
             });
+            // Voeg event listener toe na het toevoegen van items
+            document.querySelectorAll('.notes-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    showNotePopup(this.getAttribute('data-notes'));
+                });
+            });
+        }).catch((error) => {
+            console.error('Fout bij het ophalen van de geregistreerde uren:', error);
+        });
+    }
+
+    // Functie om notitie pop-up te tonen
+    function showNotePopup(noteContent) {
+        const popup = document.getElementById('notes-popup');
+        popup.textContent = noteContent;
+        popup.classList.add('visible');
+    }
+
+    // Sluit notitie pop-up wanneer er buiten wordt geklikt
+    window.onclick = function(event) {
+        const popup = document.getElementById('notes-popup');
+        if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
+            popup.classList.remove('visible');
         }
-    });
-    calendar.render();
-}
-
-// Functie voor vrije dagen aanvragen
-document.getElementById('leave-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const user = auth.currentUser;
-    if (user) {
-        const startDay = document.getElementById('leave-start-day').value;
-        const endDay = document.getElementById('leave-end-day').value;
-        const startTime = document.getElementById('leave-start-time').value || '00:00';
-        const endTime = document.getElementById('leave-end-time').value || '23:59';
-        const description = document.getElementById('leave-description').value;
-
-        addDoc(collection(db, 'events'), {
-            title: 'Vrije dag',
-            start: `${startDay}T${startTime}:00`,
-            end: `${endDay}T${endTime}:00`,
-            description: description,
-            employeeId: user.uid
-        })
-        .then(() => {
-            console.log('Vrije dag succesvol aangevraagd');
-            alert('Vrije dag succesvol aangevraagd');
-            document.getElementById('leave-form').reset();
-            loadCalendar(); // Herlaad de agenda
-        })
-        .catch((error) => {
-            console.error('Fout bij het aanvragen van vrije dag:', error);
-            alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
-        });
-    } else {
-        alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
     }
-});
-
-// Laad de agenda en kleuren bij het laden van de pagina
-document.addEventListener("DOMContentLoaded", function() {
-    loadEmployeeColors().then(() => {
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                loadLoggedHours(user.uid);
-                loadCalendar();
-            }
-        });
-    });
-});
-
-// Functie om notitie pop-up te tonen
-function showNotePopup(noteContent) {
-    const popup = document.getElementById('notes-popup');
-    popup.textContent = noteContent;
-    popup.classList.add('visible');
-}
-
-// Sluit notitie pop-up wanneer er buiten wordt geklikt
-window.onclick = function(event) {
-    const popup = document.getElementById('notes-popup');
-    if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
-        popup.classList.remove('visible');
-    }
-}
 </script>
     
 <style>
