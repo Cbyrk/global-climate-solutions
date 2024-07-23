@@ -114,8 +114,13 @@
     }
 
     // Functie om geregistreerde uren op te halen
-    function loadLoggedHours(userId) {
-        const q = query(collection(db, 'hours'), where('userId', '==', userId));
+    function loadLoggedHours(userId, startDate, endDate) {
+        let q;
+        if (startDate && endDate) {
+            q = query(collection(db, 'hours'), where('userId', '==', userId), where('day', '>=', startDate), where('day', '<=', endDate));
+        } else {
+            q = query(collection(db, 'hours'), where('userId', '==', userId));
+        }
         getDocs(q).then(querySnapshot => {
             const hoursLogged = document.getElementById('hours-logged');
             hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
@@ -136,7 +141,7 @@
             // Voeg event listener toe na het toevoegen van items
             document.querySelectorAll('.notes-item').forEach(item => {
                 item.addEventListener('click', function() {
-                    showNotePopup(this.getAttribute('data-notes'));
+                    showNotePopup(this.getAttribute('data-notes'), this);
                 });
             });
         }).catch((error) => {
@@ -145,10 +150,15 @@
     }
 
     // Functie om notitie pop-up te tonen
-    function showNotePopup(noteContent) {
+    function showNotePopup(noteContent, element) {
         const popup = document.getElementById('notes-popup');
         popup.textContent = noteContent;
         popup.classList.add('visible');
+
+        // Zorg ervoor dat de pop-up naast de geregistreerde uren verschijnt
+        const rect = element.getBoundingClientRect();
+        popup.style.top = `${rect.top + window.scrollY}px`;
+        popup.style.left = `${rect.right + window.scrollX + 10}px`; // Verplaats popup 10px naar rechts van de button
     }
 
     // Sluit notitie pop-up wanneer er buiten wordt geklikt
@@ -158,6 +168,101 @@
             popup.classList.remove('visible');
         }
     }
+
+    // Functie om de agenda te laden
+    function loadCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: function(fetchInfo, successCallback, failureCallback) {
+                getDocs(collection(db, 'events')).then(querySnapshot => {
+                    const events = [];
+                    querySnapshot.forEach(doc => {
+                        const data = doc.data();
+                        events.push({
+                            title: data.title,
+                            start: data.start,
+                            end: data.end,
+                            backgroundColor: employeeColors[data.employeeId],
+                            borderColor: employeeColors[data.employeeId]
+                        });
+                    });
+                    successCallback(events);
+                }).catch(error => {
+                    console.error('Fout bij het ophalen van events:', error);
+                    failureCallback(error);
+                });
+            }
+        });
+        calendar.render();
+    }
+
+    // Functie voor vrije dagen aanvragen
+    document.getElementById('leave-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (user) {
+        const startDay = document.getElementById('leave-start-day').value;
+        const endDay = document.getElementById('leave-end-day').value;
+        const startTime = document.getElementById('leave-start-time').value || '00:00';
+        const endTime = document.getElementById('leave-end-time').value || '23:59';
+        const description = document.getElementById('leave-description').value;
+
+        addDoc(collection(db, 'events'), {
+            title: 'Vrije dag',
+            start: `${startDay}T${startTime}:00`,
+            end: `${endDay}T${endTime}:00`,
+            description: description,
+            employeeId: user.uid
+        })
+        .then(() => {
+            console.log('Vrije dag succesvol aangevraagd');
+            alert('Vrije dag succesvol aangevraagd');
+            document.getElementById('leave-form').reset();
+            loadCalendar(); // Herlaad de agenda
+        })
+        .catch((error) => {
+            console.error('Fout bij het aanvragen van vrije dag:', error);
+            alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
+        });
+    } else {
+        alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
+    }
+});
+
+// Laad de agenda en kleuren bij het laden van de pagina
+document.addEventListener("DOMContentLoaded", function() {
+    loadEmployeeColors().then(() => {
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                loadLoggedHours(user.uid);
+                loadCalendar();
+            }
+        });
+    });
+});
+
+// Functie voor vorige week
+function previousWeek() {
+    const user = auth.currentUser;
+    if (user) {
+        const currentDate = new Date();
+        const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() - 7));
+        const endOfWeek = new Date(currentDate.setDate(startOfWeek.getDate() + 6));
+        loadLoggedHours(user.uid, startOfWeek.toISOString().split('T')[0], endOfWeek.toISOString().split('T')[0]);
+    }
+}
+
+// Functie voor volgende week
+function nextWeek() {
+    const user = auth.currentUser;
+    if (user) {
+        const currentDate = new Date();
+        const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 7));
+        const endOfWeek = new Date(currentDate.setDate(startOfWeek.getDate() + 6));
+        loadLoggedHours(user.uid, startOfWeek.toISOString().split('T')[0], endOfWeek.toISOString().split('T')[0]);
+    }
+}
 </script>
     
 <style>
@@ -250,9 +355,6 @@
         max-width: 300px;
         max-height: 200px; /* Maximum height for the popup */
         overflow-y: auto; /* Scroll if the content exceeds the max height */
-        left: 65%; /* Adjusted position */
-        top: 60%; /* Adjusted position */
-        transform: translate(-50%, -50%);
     }
     .notes-popup.visible {
         display: block;
@@ -324,14 +426,46 @@
         <div id="calendar"></div>
     </div>
 
+    <div class="dashboard-box" id="leave-box">
+        <h2>Vrije dagen aanvragen</h2>
+        <form id="leave-form">
+            <div>
+                <label for="leave-start-day">Startdag:</label>
+                <input type="date" id="leave-start-day" required>
+            </div>
+            <div>
+                <label for="leave-end-day">Einddag:</label>
+                <input type="date" id="leave-end-day" required>
+            </div>
+            <div>
+                <label for="leave-start-time">Starttijd:</label>
+                <input type="time" id="leave-start-time">
+            </div>
+            <div>
+                <label for="leave-end-time">Eindtijd:</label>
+                <input type="time" id="leave-end-time">
+            </div>
+            <div>
+                <label for="leave-description">Omschrijving:</label>
+                <textarea id="leave-description" rows="4" placeholder="Omschrijving van de vrije dag"></textarea>
+            </div>
+            <button type="submit">Vrije dag aanvragen</button>
+        </form>
+    </div>
+
     <div id="notes-popup" class="notes-popup"></div>
 
     <script>
         // Functie om notitie pop-up te tonen
-        function showNotePopup(noteContent) {
+        function showNotePopup(noteContent, element) {
             const popup = document.getElementById('notes-popup');
             popup.textContent = noteContent;
             popup.classList.add('visible');
+
+            // Zorg ervoor dat de pop-up naast de geregistreerde uren verschijnt
+            const rect = element.getBoundingClientRect();
+            popup.style.top = `${rect.top + window.scrollY}px`;
+            popup.style.left = `${rect.right + window.scrollX + 10}px`; // Verplaats popup 10px naar rechts van de button
         }
 
         // Sluit notitie pop-up wanneer er buiten wordt geklikt
@@ -341,6 +475,29 @@
                 popup.classList.remove('visible');
             }
         }
+
+        // Functie voor vorige week
+        function previousWeek() {
+            const user = auth.currentUser;
+            if (user) {
+                const currentDate = new Date();
+                const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() - 7));
+                const endOfWeek = new Date(currentDate.setDate(startOfWeek.getDate() + 6));
+                loadLoggedHours(user.uid, startOfWeek.toISOString().split('T')[0], endOfWeek.toISOString().split('T')[0]);
+            }
+        }
+
+        // Functie voor volgende week
+        function nextWeek() {
+            const user = auth.currentUser;
+            if (user) {
+                const currentDate = new Date();
+                const startOfWeek = new Date(currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 7));
+                const endOfWeek = new Date(currentDate.setDate(startOfWeek.getDate() + 6));
+                loadLoggedHours(user.uid, startOfWeek.toISOString().split('T')[0], endOfWeek.toISOString().split('T')[0]);
+            }
+        }
     </script>
 </body>
 </html>
+
