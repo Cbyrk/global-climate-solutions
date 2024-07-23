@@ -333,21 +333,28 @@ document.addEventListener("DOMContentLoaded", function() {
         padding: 8px;
         border: 1px solid #3a3a3a;
     }
+    .notitie-btn {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .notitie-btn:hover {
+        background-color: #45a049;
+    }
     .notitie-popup {
         position: fixed;
-        top: 20%;
-        left: 50%;
-        transform: translate(-50%, -20%);
+        bottom: 20px;
+        right: 20px;
         background-color: #2c2c2c;
+        color: white;
         padding: 20px;
-        border: 2px solid #4CAF50;
         border-radius: 10px;
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        max-width: 300px;
         z-index: 1000;
-        max-width: 80%;
-        max-height: 60%;
-        overflow-y: auto;
-        color: white;
     }
 </style>
 </head>
@@ -399,7 +406,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     <th>Pauze in Minuten</th>
                     <th>Eind Tijd</th>
                     <th>Totaal Uur</th>
-                    <th>Notitie</th>
+                    <th>Notities</th>
                 </tr>
             </thead>
             <tbody id="hours-logged">
