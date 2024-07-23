@@ -241,7 +241,7 @@
     .notes-popup {
         display: none;
         position: absolute;
-        background-color: #3a3a3a;
+        background-color: #4c4c4c; /* Iets lichtere achtergrondkleur */
         color: white;
         padding: 20px;
         border-radius: 10px;
@@ -250,9 +250,9 @@
         max-width: 300px;
         max-height: 200px; /* Maximum height for the popup */
         overflow-y: auto; /* Scroll if the content exceeds the max height */
-        left: calc(50% + 200px); /* Adjust the position */
-        top: 50%; /* Center vertically */
-        transform: translateY(-50%); /* Adjust for centering */
+        left: 65%; /* Adjusted position */
+        top: 60%; /* Adjusted position */
+        transform: translate(-50%, -50%);
     }
     .notes-popup.visible {
         display: block;
