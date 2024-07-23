@@ -199,51 +199,6 @@ document.getElementById('leave-form').addEventListener('submit', function(e) {
     }
 });
 
-// Functie om geregistreerde uren op te halen
-function loadLoggedHours(userId) {
-    const q = query(collection(db, 'hours'), where('userId', '==', userId));
-    getDocs(q).then(querySnapshot => {
-        const hoursLogged = document.getElementById('hours-logged');
-        hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-        querySnapshot.forEach(doc => {
-            const hours = doc.data();
-            const hoursItem = document.createElement('div');
-            hoursItem.className = 'hours-item';
-            hoursItem.innerHTML = `
-                <span>${hours.day}</span>
-                <span>${hours.startTime}</span>
-                <span>${hours.breakTime} min</span>
-                <span>${hours.endTime}</span>
-                <span>${hours.hoursWorked} uur</span>
-                <span><button class="notitie-btn" data-notitie="${hours.notitie ? hours.notitie : 'Geen notitie'}">Notitie Weergeven</button></span>
-            `;
-            hoursLogged.appendChild(hoursItem);
-        });
-
-        // Voeg event listener toe aan notitie buttons
-        document.querySelectorAll('.notitie-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                showNotitiePopup(this.getAttribute('data-notitie'));
-            });
-        });
-    }).catch((error) => {
-        console.error('Fout bij het ophalen van de geregistreerde uren:', error);
-    });
-}
-
-// Functie om notitie popup te laten zien
-function showNotitiePopup(notitie) {
-    const popup = document.createElement('div');
-    popup.className = 'notitie-popup';
-    popup.innerHTML = `<p>${notitie}</p>`;
-    document.body.appendChild(popup);
-    
-    // Verwijder popup na 5 seconden
-    setTimeout(() => {
-        popup.remove();
-    }, 5000);
-}
-
 // Laad de agenda en kleuren bij het laden van de pagina
 document.addEventListener("DOMContentLoaded", function() {
     loadEmployeeColors().then(() => {
