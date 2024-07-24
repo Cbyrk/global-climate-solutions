@@ -61,8 +61,10 @@
                 }).catch((error) => {
                     console.error('Fout bij het ophalen van de gebruikersgegevens:', error);
                 });
-                loadLoggedHours(user.uid, currentWeek);
-                loadCalendar();
+                loadEmployeeColors().then(() => {
+                    loadLoggedHours(user.uid, currentWeek);
+                    loadCalendar();
+                });
             } else {
                 console.log('Geen gebruiker ingelogd.');
                 window.location.href = 'werknemers_login.html';
@@ -83,7 +85,7 @@
 
                 addDoc(collection(db, 'hours'), {
                     userId: user.uid,
-                    day: day,
+                    day: new Date(day),
                     startTime: startTime,
                     endTime: endTime,
                     breakTime: breakTime,
@@ -123,8 +125,8 @@
         }
 
         // Functie om geregistreerde uren op te halen
-        function loadLoggedHours(userId) {
-            const weekRange = getWeekRange(currentWeek);
+        function loadLoggedHours(userId, weekOffset) {
+            const weekRange = getWeekRange(weekOffset);
             const q = query(collection(db, 'hours'), where('userId', '==', userId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
             getDocs(q).then(querySnapshot => {
                 const hoursLogged = document.getElementById('hours-logged');
@@ -173,90 +175,90 @@
         function previousWeek() {
             if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
                 currentWeek--;
-                loadLoggedHours(auth.currentUser.uid);
+                loadLoggedHours(auth.currentUser.uid, currentWeek);
             }
         }
 
-        // Functie om naar de volgende week te gaan
+               // Functie om naar de volgende week te gaan
         function nextWeek() {
             currentWeek++;
-            loadLoggedHours(auth.currentUser.uid);
+            loadLoggedHours(auth.currentUser.uid, currentWeek);
         }
 
-   // Functie om de agenda te laden
-function loadCalendar() {
-    const calendarEl = document.getElementById('calendar');
-    const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        events: function(fetchInfo, successCallback, failureCallback) {
-            getDocs(collection(db, 'events')).then(querySnapshot => {
-                const events = [];
-                querySnapshot.forEach(doc => {
-                    const data = doc.data();
-                    events.push({
-                        title: data.title,
-                        start: data.start,
-                        end: data.end,
-                        backgroundColor: employeeColors[data.employeeId],
-                        borderColor: employeeColors[data.employeeId]
+        // Functie om de agenda te laden
+        function loadCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    getDocs(collection(db, 'events')).then(querySnapshot => {
+                        const events = [];
+                        querySnapshot.forEach(doc => {
+                            const data = doc.data();
+                            events.push({
+                                title: data.title,
+                                start: data.start,
+                                end: data.end,
+                                backgroundColor: employeeColors[data.employeeId],
+                                borderColor: employeeColors[data.employeeId]
+                            });
+                        });
+                        successCallback(events);
+                    }).catch(error => {
+                        console.error('Fout bij het ophalen van events:', error);
+                        failureCallback(error);
                     });
-                });
-                successCallback(events);
-            }).catch(error => {
-                console.error('Fout bij het ophalen van events:', error);
-                failureCallback(error);
+                }
             });
+            calendar.render();
         }
-    });
-    calendar.render();
-}
 
-// Functie voor vrije dagen aanvragen
-document.getElementById('leave-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const user = auth.currentUser;
-    if (user) {
-        const startDay = document.getElementById('leave-start-day').value;
-        const endDay = document.getElementById('leave-end-day').value;
-        const startTime = document.getElementById('leave-start-time').value || '00:00';
-        const endTime = document.getElementById('leave-end-time').value || '23:59';
-        const description = document.getElementById('leave-description').value;
-
-        addDoc(collection(db, 'events'), {
-            title: 'Vrije dag',
-            start: `${startDay}T${startTime}:00`,
-            end: `${endDay}T${endTime}:00`,
-            description: description,
-            employeeId: user.uid
-        })
-        .then(() => {
-            console.log('Vrije dag succesvol aangevraagd');
-            alert('Vrije dag succesvol aangevraagd');
-            document.getElementById('leave-form').reset();
-            loadCalendar(); // Herlaad de agenda
-        })
-        .catch((error) => {
-            console.error('Fout bij het aanvragen van vrije dag:', error);
-            alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
-        });
-    } else {
-        alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
-    }
-});
-
-// Laad de agenda en kleuren bij het laden van de pagina
-document.addEventListener("DOMContentLoaded", function() {
-    loadEmployeeColors().then(() => {
-        onAuthStateChanged(auth, user => {
+        // Functie voor vrije dagen aanvragen
+        document.getElementById('leave-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
             if (user) {
-                loadLoggedHours(user.uid, currentWeek);
-                loadCalendar();
+                const startDay = document.getElementById('leave-start-day').value;
+                const endDay = document.getElementById('leave-end-day').value;
+                const startTime = document.getElementById('leave-start-time').value || '00:00';
+                const endTime = document.getElementById('leave-end-time').value || '23:59';
+                const description = document.getElementById('leave-description').value;
+
+                addDoc(collection(db, 'events'), {
+                    title: 'Vrije dag',
+                    start: `${startDay}T${startTime}:00`,
+                    end: `${endDay}T${endTime}:00`,
+                    description: description,
+                    employeeId: user.uid
+                })
+                .then(() => {
+                    console.log('Vrije dag succesvol aangevraagd');
+                    alert('Vrije dag succesvol aangevraagd');
+                    document.getElementById('leave-form').reset();
+                    loadCalendar(); // Herlaad de agenda
+                })
+                .catch((error) => {
+                    console.error('Fout bij het aanvragen van vrije dag:', error);
+                    alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
+                });
+            } else {
+                alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
             }
         });
-    });
-});
-</script>
-    
+
+        // Laad de agenda en kleuren bij het laden van de pagina
+        document.addEventListener("DOMContentLoaded", function() {
+            loadEmployeeColors().then(() => {
+                onAuthStateChanged(auth, user => {
+                    if (user) {
+                        loadLoggedHours(user.uid, currentWeek);
+                        loadCalendar();
+                    }
+                });
+            });
+        });
+    </script>
+
 <style>
     body {
         font-family: Arial, sans-serif;
@@ -443,7 +445,7 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
     </div>
 
-   <div class="dashboard-box calendar-container" id="agenda-box">
+    <div class="dashboard-box calendar-container" id="agenda-box">
         <h2>Gezamenlijke Agenda</h2>
         <div id="calendar"></div>
     </div>
@@ -471,13 +473,13 @@ document.addEventListener("DOMContentLoaded", function() {
         function previousWeek() {
             if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
                 currentWeek--;
-                loadLoggedHours(auth.currentUser.uid);
+                loadLoggedHours(auth.currentUser.uid, currentWeek);
             }
         }
 
         function nextWeek() {
             currentWeek++;
-            loadLoggedHours(auth.currentUser.uid);
+            loadLoggedHours(auth.currentUser.uid, currentWeek);
         }
 
         // Functie om de huidige week te berekenen
@@ -489,8 +491,8 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         // Functie om geregistreerde uren op te halen
-        function loadLoggedHours(userId) {
-            const weekRange = getWeekRange(currentWeek);
+        function loadLoggedHours(userId, weekOffset) {
+            const weekRange = getWeekRange(weekOffset);
             const q = query(collection(db, 'hours'), where('userId', '==', userId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
             getDocs(q).then(querySnapshot => {
                 const hoursLogged = document.getElementById('hours-logged');
