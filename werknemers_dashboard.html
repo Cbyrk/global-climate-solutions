@@ -179,8 +179,8 @@
             }
         }
 
-       // Functie om de agenda te laden
-    function loadCalendar() {
+      // Functie om de agenda te laden
+function loadCalendar() {
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -193,8 +193,8 @@
                         title: data.title,
                         start: data.start,
                         end: data.end,
-                        backgroundColor: employeeColors[data.employeeId],
-                        borderColor: employeeColors[data.employeeId]
+                        backgroundColor: employeeColors[data.userId],
+                        borderColor: employeeColors[data.userId]
                     });
                 });
                 successCallback(events);
@@ -223,7 +223,7 @@ document.getElementById('leave-form').addEventListener('submit', function(e) {
             start: `${startDay}T${startTime}:00`,
             end: `${endDay}T${endTime}:00`,
             description: description,
-            employeeId: user.uid
+            userId: user.uid
         })
         .then(() => {
             console.log('Vrije dag succesvol aangevraagd');
