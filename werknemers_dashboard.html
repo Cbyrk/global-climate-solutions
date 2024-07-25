@@ -179,14 +179,8 @@
             }
         }
 
-        // Functie om naar de volgende week te gaan
-        function nextWeek() {
-            currentWeek++;
-            loadLoggedHours(auth.currentUser.uid, currentWeek);
-        }
-
        // Functie om de agenda te laden
-function loadCalendar() {
+    function loadCalendar() {
     const calendarEl = document.getElementById('calendar');
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
