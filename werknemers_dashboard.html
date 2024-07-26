@@ -28,9 +28,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-        let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
+let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
-        // Controleer of gebruiker is ingelogd
+// Controleer of gebruiker is ingelogd
 onAuthStateChanged(auth, user => {
     if (user) {
         console.log('Gebruiker ingelogd:', user);
