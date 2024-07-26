@@ -8,68 +8,67 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
     <script type="module">
+        // Firebase configuratie
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+        import { getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
-// Firebase configuratie
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-import { getFirestore, doc, getDoc, collection, query, where, getDocs, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
+            authDomain: "register-employee-gcs.firebaseapp.com",
+            projectId: "register-employee-gcs",
+            storageBucket: "register-employee-gcs.appspot.com",
+            messagingSenderId: "823490257683",
+            appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
+            measurementId: "G-Q68YZMSFJX"
+        };
 
-const firebaseConfig = {
-    apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
-    authDomain: "register-employee-gcs.firebaseapp.com",
-    projectId: "register-employee-gcs",
-    storageBucket: "register-employee-gcs.appspot.com",
-    messagingSenderId: "823490257683",
-    appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
-    measurementId: "G-Q68YZMSFJX"
-};
+        // Firebase initialiseren
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-// Firebase initialiseren
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+        let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
-let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
-
-// Controleer of gebruiker is ingelogd
-onAuthStateChanged(auth, user => {
-    if (user) {
-        console.log('Gebruiker ingelogd:', user);
-        // Haal gegevens op voor de ingelogde werknemer
-        const userDocRef = doc(db, 'employees', user.uid);
-        getDoc(userDocRef).then(doc => {
-            if (doc.exists) {
-                const data = doc.data();
-                document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
-                document.getElementById('employee-email').textContent = data.Email;
-                document.getElementById('employee-address').textContent = data.Adress;
-                document.getElementById('employee-city').textContent = data.City;
-                document.getElementById('employee-postal').textContent = data.PostalCode;
-                document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
+        // Controleer of gebruiker is ingelogd
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                console.log('Gebruiker ingelogd:', user);
+                // Haal gegevens op voor de ingelogde werknemer
+                const userDocRef = doc(db, 'employees', user.uid);
+                getDoc(userDocRef).then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
+                        document.getElementById('employee-email').textContent = data.Email;
+                        document.getElementById('employee-address').textContent = data.Adress;
+                        document.getElementById('employee-city').textContent = data.City;
+                        document.getElementById('employee-postal').textContent = data.PostalCode;
+                        document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
+                    } else {
+                        console.log('Geen gegevens gevonden voor deze gebruiker');
+                    }
+                }).catch((error) => {
+                    console.error('Fout bij het ophalen van de gebruikersgegevens:', error);
+                });
+                loadLoggedHours(user.uid, currentWeek);
+                loadCalendar();
             } else {
-                console.log('Geen gegevens gevonden voor deze gebruiker');
+                console.log('Geen gebruiker ingelogd.');
+                window.location.href = 'werknemers_login.html';
             }
-        }).catch((error) => {
-            console.error('Fout bij het ophalen van de gebruikersgegevens:', error);
         });
-        loadLoggedHours(user.uid, currentWeek);
-        loadCalendar();
-    } else {
-        console.log('Geen gebruiker ingelogd.');
-        window.location.href = 'werknemers_login.html';
-    }
-});
 
-// Laad de agenda en initialen bij het laden van de pagina
-document.addEventListener("DOMContentLoaded", function() {
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            loadLoggedHours(user.uid, currentWeek);
-            loadCalendar();
-        }
-    });
-});
-
+        // Laad de agenda en initialen bij het laden van de pagina
+        document.addEventListener("DOMContentLoaded", function() {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    loadLoggedHours(user.uid, currentWeek);
+                    loadCalendar();
+                }
+            });
+        });
+        
         // Functie voor urenregistratie
         document.getElementById('hours-form').addEventListener('submit', function(e) {
             e.preventDefault();
