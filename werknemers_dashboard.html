@@ -32,7 +32,7 @@ const db = getFirestore(app);
 let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
 // Controleer of gebruiker is ingelogd
-onAuthStateChanged(auth, currentUser => {
+onAuthStateChanged(auth, user => {
     if (user) {
         console.log('Gebruiker ingelogd:', user);
         // Haal gegevens op voor de ingelogde werknemer
@@ -576,7 +576,7 @@ onAuthStateChanged(auth, currentUser => {
 
         // Laad de agenda en initialen bij het laden van de pagina
         document.addEventListener("DOMContentLoaded", function() {
-            onAuthStateChanged(auth, currentUser => {
+            onAuthStateChanged(auth, user => {
                 if (user) {
                     loadLoggedHours(user.uid, currentWeek);
                     loadCalendar();
