@@ -7,8 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
-    <script type="module" src="path/to/your/dashboard.js"></script>
-// dashboard.js
+    <script type="module" 
 
 // Firebase configuratie
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
@@ -33,7 +32,7 @@ const db = getFirestore(app);
 let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
 // Controleer of gebruiker is ingelogd
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, currentUser => {
     if (user) {
         console.log('Gebruiker ingelogd:', user);
         // Haal gegevens op voor de ingelogde werknemer
@@ -577,7 +576,7 @@ onAuthStateChanged(auth, user => {
 
         // Laad de agenda en initialen bij het laden van de pagina
         document.addEventListener("DOMContentLoaded", function() {
-            onAuthStateChanged(auth, user => {
+            onAuthStateChanged(auth, currentUser => {
                 if (user) {
                     loadLoggedHours(user.uid, currentWeek);
                     loadCalendar();
