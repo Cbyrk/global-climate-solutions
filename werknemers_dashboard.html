@@ -184,8 +184,10 @@
                         const events = [];
                         querySnapshot.forEach(doc => {
                             const data = doc.data();
+                            const firstNameInitial = data.FirstName ? data.FirstName.charAt(0) : '';
+                            const lastNameInitial = data.LastName ? data.LastName.charAt(0) : '';
                             events.push({
-                                title: `${data.FirstName.charAt(0)}${data.LastName.charAt(0)} - ${data.title}`,
+                                title: `${firstNameInitial}${lastNameInitial} - ${data.title}`,
                                 start: data.start,
                                 end: data.end
                             });
@@ -216,8 +218,8 @@
                     start: `${startDay}T${startTime}:00`,
                     end: `${endDay}T${endTime}:00`,
                     description: description,
-                    FirstName: user.FirstName, // Voeg de voornaam toe
-                    LastName: user.LastName // Voeg de achternaam toe
+                    FirstName: user.displayName ? user.displayName.split(' ')[0] : '', // Voeg de voornaam toe
+                    LastName: user.displayName ? user.displayName.split(' ')[1] : '' // Voeg de achternaam toe
                 })
                 .then(() => {
                     console.log('Vrije dag succesvol aangevraagd');
@@ -234,7 +236,7 @@
             }
         });
 
-        // Laad de agenda en kleuren bij het laden van de pagina
+        // Laad de agenda en initialen bij het laden van de pagina
         document.addEventListener("DOMContentLoaded", function() {
             onAuthStateChanged(auth, user => {
                 if (user) {
@@ -519,8 +521,10 @@
                         const events = [];
                         querySnapshot.forEach(doc => {
                             const data = doc.data();
+                            const firstNameInitial = data.FirstName ? data.FirstName.charAt(0) : '';
+                            const lastNameInitial = data.LastName ? data.LastName.charAt(0) : '';
                             events.push({
-                                title: `${data.FirstName.charAt(0)}${data.LastName.charAt(0)} - ${data.title}`,
+                                title: `${firstNameInitial}${lastNameInitial} - ${data.title}`,
                                 start: data.start,
                                 end: data.end
                             });
@@ -551,8 +555,8 @@
                     start: `${startDay}T${startTime}:00`,
                     end: `${endDay}T${endTime}:00`,
                     description: description,
-                    FirstName: user.FirstName, // Voeg de voornaam toe
-                    LastName: user.LastName // Voeg de achternaam toe
+                    FirstName: user.displayName ? user.displayName.split(' ')[0] : '', // Voeg de voornaam toe
+                    LastName: user.displayName ? user.displayName.split(' ')[1] : '' // Voeg de achternaam toe
                 })
                 .then(() => {
                     console.log('Vrije dag succesvol aangevraagd');
