@@ -68,7 +68,7 @@
                 }
             });
         });
-        
+
         // Functie voor urenregistratie
         document.getElementById('hours-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -156,14 +156,7 @@
         }
 
         // Functie om notitie pop-up te tonen
-        function showNotePopup(noteContent) {
-            const popup = document.getElementById('notes-popup');
-            popup.textContent = noteContent;
-            popup.classList.add('visible');
-        }
-
-        // Sluit notitie pop-up wanneer er buiten wordt geklikt
-        window.onclick = function(event) {
+                window.onclick = function(event) {
             const popup = document.getElementById('notes-popup');
             if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
                 popup.classList.remove('visible');
@@ -244,16 +237,6 @@
             } else {
                 alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
             }
-        });
-
-        // Laad de agenda en initialen bij het laden van de pagina
-        document.addEventListener("DOMContentLoaded", function() {
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    loadLoggedHours(user.uid, currentWeek);
-                    loadCalendar();
-                }
-            });
         });
     </script>
 
@@ -411,7 +394,7 @@
             </div>
             <div>
                 <label for="leave-end-time">Eindtijd:</label>
-                <input type="time" id="leave-end-time">
+                                <input type="time" id="leave-end-time">
             </div>
             <div>
                 <label for="leave-description">Beschrijving:</label>
@@ -451,236 +434,9 @@
     <div id="notes-popup" class="notes-popup"></div>
 
     <script>
-        // Functie om notitie pop-up te tonen
-        function showNotePopup(noteContent) {
-            const popup = document.getElementById('notes-popup');
-            popup.textContent = noteContent;
-            popup.classList.add('visible');
-        }
-
-        // Sluit notitie pop-up wanneer er buiten wordt geklikt
-        window.onclick = function(event) {
-            const popup = document.getElementById('notes-popup');
-            if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
-                popup.classList.remove('visible');
-            }
-        }
-
-        let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
-
-        function previousWeek() {
-            if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
-                currentWeek--;
-                loadLoggedHours(auth.currentUser.uid, currentWeek);
-            }
-        }
-
-        function nextWeek() {
-            currentWeek++;
-            loadLoggedHours(auth.currentUser.uid, currentWeek);
-        }
-
-        // Functie om de huidige week te berekenen
-        function getWeekRange(weekOffset) {
-            const now = new Date();
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1 + (weekOffset * 7))); // Start op maandag
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            return { start: startOfWeek, end: endOfWeek };
-        }
-
-        // Functie om geregistreerde uren op te halen
-        function loadLoggedHours(userId, weekOffset) {
-            const weekRange = getWeekRange(weekOffset);
-            const q = query(collection(db, 'hours'), where('userId', '==', userId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
-            getDocs(q).then(querySnapshot => {
-                const hoursLogged = document.getElementById('hours-logged');
-                hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-                querySnapshot.forEach(doc => {
-                    const hours = doc.data();
-                    const hoursItem = document.createElement('div');
-                    hoursItem.className = 'hours-item';
-                    hoursItem.innerHTML = `
-                        <span>${hours.day.toDate().toISOString().split('T')[0]}</span>
-                        <span>${hours.startTime}</span>
-                        <span>${hours.breakTime} min</span>
-                        <span>${hours.endTime}</span>
-                        <span>${hours.hoursWorked} uur</span>
-                        <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
-                    `;
-                    hoursLogged.appendChild(hoursItem);
-                });
-                // Voeg event listener toe na het toevoegen van items
-                document.querySelectorAll('.notes-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        showNotePopup(this.getAttribute('data-notes'));
-                    });
-                });
-            }).catch((error) => {
-                console.error('Fout bij het ophalen van de geregistreerde uren:', error);
-            });
-        }
-
-        // Functie om de agenda te laden
-        function loadCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    getDocs(collection(db, 'events')).then(querySnapshot => {
-                        const events = [];
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            const firstNameInitial = data.FirstName ? data.FirstName.charAt(0) : '';
-                            const lastNameInitial = data.LastName ? data.LastName.charAt(0) : '';
-                            events.push({
-                                title: `${firstNameInitial}${lastNameInitial} - ${data.title}`,
-                                start: data.start,
-                                end: data.end
-                            });
-                        });
-                        successCallback(events);
-                    }).catch(error => {
-                        console.error('Fout bij het ophalen van events:', error);
-                        failureCallback(error);
-                    });
-                }
-            });
-            calendar.render();
-        }
-
-        // Functie voor vrije dagen aanvragen
-        document.getElementById('leave-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (user) {
-                const startDay = document.getElementById('leave-start-day').value;
-                const endDay = document.getElementById('leave-end-day').value;
-                const startTime = document.getElementById('leave-start-time').value || '00:00';
-                const endTime = document.getElementById('leave-end-time').value || '23:59';
-                const description = document.getElementById('leave-description').value;
-
-                addDoc(collection(db, 'events'), {
-                    title: 'Vrije dag',
-                    start: `${startDay}T${startTime}:00`,
-                    end: `${endDay}T${endTime}:00`,
-                    description: description,
-                    FirstName: user.displayName ? user.displayName.split(' ')[0] : '', // Voeg de voornaam toe
-                    LastName: user.displayName ? user.displayName.split(' ')[1] : '' // Voeg de achternaam toe
-                })
-                .then(() => {
-                    console.log('Vrije dag succesvol aangevraagd');
-                    alert('Vrije dag succesvol aangevraagd');
-                    document.getElementById('leave-form').reset();
-                    loadCalendar(); // Herlaad de agenda
-                })
-                .catch((error) => {
-                    console.error('Fout bij het aanvragen van vrije dag:', error);
-                    alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
-                });
-            } else {
-                alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
-            }
-        });
+        // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
+        window.previousWeek = previousWeek;
+        window.nextWeek = nextWeek;
     </script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1e1e1e;
-            color: white;
-            margin: 0;
-            padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto auto;
-            gap: 20px;
-        }
-        .dashboard-box {
-            background-color: #2c2c2c;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-        }
-        .dashboard-box h2 {
-            margin-top: 0;
-            color: #d4d4d4;
-        }
-        .dashboard-box p, .dashboard-box label {
-            color: #d4d4d4;
-        }
-        .dashboard-box input, .dashboard-box button, .dashboard-box textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border: none;
-            border-radius: 5px;
-        }
-        .dashboard-box button {
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        .dashboard-box button:hover {
-            background-color: #45a049;
-        }
-        .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"], .dashboard-box textarea {
-            background-color: #3a3a3a;
-            color: white;
-        }
-        .dashboard-box meter {
-            width: 100%;
-        }
-        .dashboard-box .actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-        }
-        .dashboard-box .calendar-container {
-            max-width: 100%;
-        }
-
-        /* Tabel opmaak */
-        .hours-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .hours-table th, .hours-table td {
-            border: 1px solid #3a3a3a;
-            padding: 8px;
-            text-align: left;
-        }
-        .hours-table th {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .hours-item {
-            display: table-row;
-        }
-        .hours-item span {
-            display: table-cell;
-            padding: 8px;
-            border: 1px solid #3a3a3a;
-        }
-        .notes-popup {
-            display: none;
-            position: absolute;
-            background-color: #4c4c4c; /* Iets lichtere achtergrondkleur */
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            z-index: 100;
-            max-width: 300px;
-            max-height: 200px; /* Maximum height for the popup */
-            overflow-y: auto; /* Scroll if the content exceeds the max height */
-            left: 50%; /* Adjusted position */
-            top: 50%; /* Adjusted position */
-            transform: translate(-50%, -50%);
-        }
-        .notes-popup.visible {
-            display: block;
-        }
-    </style>
 </body>
 </html>
