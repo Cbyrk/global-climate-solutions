@@ -60,6 +60,17 @@ onAuthStateChanged(auth, user => {
     }
 });
 
+// Laad de agenda en initialen bij het laden van de pagina
+document.addEventListener("DOMContentLoaded", function() {
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            loadLoggedHours(user.uid, currentWeek);
+            loadCalendar();
+        }
+    });
+});
+
+
         // Functie voor urenregistratie
         document.getElementById('hours-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -573,16 +584,6 @@ onAuthStateChanged(auth, user => {
                 alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
             }
         });
-
-        // Laad de agenda en initialen bij het laden van de pagina
-        document.addEventListener("DOMContentLoaded", function() {
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    loadLoggedHours(user.uid, currentWeek);
-                    loadCalendar();
-                }
-            });
-         });
     </script>
 
     <style>
