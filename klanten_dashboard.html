@@ -95,6 +95,19 @@
                 }
             });
         });
+
+        // Vul het select menu voor het toevoegen van een evenement
+        getDocs(q).then(querySnapshot => {
+            const eventEmployeeSelect = document.getElementById('event-employee-select');
+            eventEmployeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
+            querySnapshot.forEach(doc => {
+                const employee = doc.data();
+                const employeeOption = document.createElement('option');
+                employeeOption.value = doc.id;
+                employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
+                eventEmployeeSelect.appendChild(employeeOption);
+            });
+        });
     }
 
     // Functie om geregistreerde uren op te halen
@@ -116,6 +129,13 @@
                     <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
                 `;
                 hoursLogged.appendChild(hoursItem);
+            });
+
+            // Voeg event listener toe na het toevoegen van items
+            document.querySelectorAll('.notes-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    showNotePopup(this.getAttribute('data-notes'));
+                });
             });
         }).catch((error) => {
             console.error('Fout bij het ophalen van de geregistreerde uren:', error);
@@ -145,6 +165,9 @@
                     console.error('Fout bij het ophalen van events:', error);
                     failureCallback(error);
                 });
+            },
+            eventClick: function(info) {
+                alert(info.event.extendedProps.description);
             }
         });
         calendar.render();
@@ -161,18 +184,21 @@
             const startTime = document.getElementById('event-start-time').value || '00:00';
             const endTime = document.getElementById('event-end-time').value || '23:59';
             const description = document.getElementById('event-description').value;
+            const assignedEmployee = document.getElementById('event-employee-select').value;
 
             addDoc(collection(db, 'events'), {
                 customerId: user.uid,
                 title: title,
                 start: `${startDay}T${startTime}:00`,
                 end: `${endDay}T${endTime}:00`,
-                description: description
+                description: description,
+                assignedEmployee: assignedEmployee
             })
             .then(() => {
                 console.log('Evenement succesvol toegevoegd');
                 alert('Evenement succesvol toegevoegd');
                 document.getElementById('event-form').reset();
+                loadCalendar(user.uid); // Herlaad de agenda
                 loadCalendar(user.uid); // Herlaad de agenda
             })
             .catch((error) => {
@@ -184,6 +210,20 @@
         }
     });
 
+    // Functie om notitie pop-up te tonen
+    function showNotePopup(noteContent) {
+        const popup = document.getElementById('notes-popup');
+        popup.textContent = noteContent;
+        popup.classList.add('visible');
+    }
+
+    // Sluit notitie pop-up wanneer er buiten wordt geklikt
+    window.onclick = function(event) {
+        const popup = document.getElementById('notes-popup');
+        if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
+            popup.classList.remove('visible');
+        }
+    }
     </script>
 <style>
     body {
@@ -210,7 +250,7 @@
     .dashboard-box p, .dashboard-box label {
         color: #d4d4d4;
     }
-    .dashboard-box input, .dashboard-box button, .dashboard-box select {
+    .dashboard-box input, .dashboard-box button, .dashboard-box select, .dashboard-box textarea {
         width: 100%;
         padding: 10px;
         margin: 5px 0;
@@ -225,7 +265,7 @@
     .dashboard-box button:hover {
         background-color: #45a049;
     }
-    .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"] {
+    .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"], .dashboard-box select, .dashboard-box textarea {
         background-color: #3a3a3a;
         color: white;
     }
@@ -348,6 +388,12 @@
             <div>
                 <label for="event-description">Beschrijving:</label>
                 <textarea id="event-description" rows="4"></textarea>
+            </div>
+            <div>
+                <label for="event-employee-select">Toewijzen aan werknemer:</label>
+                <select id="event-employee-select">
+                    <option value="">Selecteer een werknemer</option>
+                </select>
             </div>
             <button type="submit">Evenement Toevoegen</button>
         </form>
