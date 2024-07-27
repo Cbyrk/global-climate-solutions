@@ -174,11 +174,10 @@
         }
 
         // Functie om notitie pop-up te tonen
-                window.onclick = function(event) {
+        function showNotePopup(noteContent) {
             const popup = document.getElementById('notes-popup');
-            if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
-                popup.classList.remove('visible');
-            }
+            popup.textContent = noteContent;
+            popup.classList.add('visible');
         }
 
         // Sluit notitie pop-up wanneer er buiten wordt geklikt
@@ -188,7 +187,7 @@
                 popup.classList.remove('visible');
             }
         }
-
+        
         // Functie om de agenda te laden
         function loadCalendar() {
             const calendarEl = document.getElementById('calendar');
