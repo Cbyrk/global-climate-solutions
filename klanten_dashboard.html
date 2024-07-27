@@ -108,11 +108,12 @@
                 const hoursItem = document.createElement('div');
                 hoursItem.className = 'hours-item';
                 hoursItem.innerHTML = `
-                    <span>${hours.day}</span>
+                    <span>${hours.day.toDate().toISOString().split('T')[0]}</span>
                     <span>${hours.startTime}</span>
                     <span>${hours.breakTime} min</span>
                     <span>${hours.endTime}</span>
                     <span>${hours.hoursWorked} uur</span>
+                    <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
                 `;
                 hoursLogged.appendChild(hoursItem);
             });
