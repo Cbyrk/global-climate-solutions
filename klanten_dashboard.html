@@ -76,13 +76,18 @@
         const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
         getDocs(q).then(querySnapshot => {
             const employeeSelect = document.getElementById('employee-select');
+            const eventEmployeeSelect = document.getElementById('event-employee-select');
             employeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
+            eventEmployeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>';
             querySnapshot.forEach(doc => {
                 const employee = doc.data();
                 const employeeOption = document.createElement('option');
                 employeeOption.value = doc.id;
                 employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
                 employeeSelect.appendChild(employeeOption);
+
+                const eventEmployeeOption = employeeOption.cloneNode(true);
+                eventEmployeeSelect.appendChild(eventEmployeeOption);
             });
 
             // Event listener voor werknemer selectie
@@ -93,19 +98,6 @@
                 } else {
                     document.getElementById('hours-logged').innerHTML = ''; // Leeg de lijst als geen werknemer is geselecteerd
                 }
-            });
-        });
-
-        // Vul het select menu voor het toevoegen van een evenement
-        getDocs(q).then(querySnapshot => {
-            const eventEmployeeSelect = document.getElementById('event-employee-select');
-            eventEmployeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
-            querySnapshot.forEach(doc => {
-                const employee = doc.data();
-                const employeeOption = document.createElement('option');
-                employeeOption.value = doc.id;
-                employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
-                eventEmployeeSelect.appendChild(employeeOption);
             });
         });
     }
@@ -160,14 +152,31 @@
                             description: data.description
                         });
                     });
-                    successCallback(events);
+
+                    // Voeg vrije dagen van werknemers toe
+                    const freeDaysQuery = query(collection(db, 'events'), where('customerId', '==', customerId), where('title', '==', 'Vrije dag'));
+                    getDocs(freeDaysQuery).then(freeDaysSnapshot => {
+                        freeDaysSnapshot.forEach(doc => {
+                            const data = doc.data();
+                            events.push({
+                                title: `Vrije dag - ${data.FirstName} ${data.LastName}`,
+                                start: data.start,
+                                end: data.end,
+                                description: data.description
+                            });
+                        });
+                        successCallback(events);
+                    }).catch(error => {
+                        console.error('Fout bij het ophalen van vrije dagen:', error);
+                        failureCallback(error);
+                    });
                 }).catch(error => {
                     console.error('Fout bij het ophalen van events:', error);
                     failureCallback(error);
                 });
             },
             eventClick: function(info) {
-                alert(info.event.extendedProps.description);
+                alert('Beschrijving: ' + info.event.extendedProps.description);
             }
         });
         calendar.render();
@@ -184,7 +193,7 @@
             const startTime = document.getElementById('event-start-time').value || '00:00';
             const endTime = document.getElementById('event-end-time').value || '23:59';
             const description = document.getElementById('event-description').value;
-            const assignedEmployee = document.getElementById('event-employee-select').value;
+            const employeeId = document.getElementById('event-employee-select').value;
 
             addDoc(collection(db, 'events'), {
                 customerId: user.uid,
@@ -192,13 +201,12 @@
                 start: `${startDay}T${startTime}:00`,
                 end: `${endDay}T${endTime}:00`,
                 description: description,
-                assignedEmployee: assignedEmployee
+                assignedTo: employeeId // Voeg de werknemer ID toe aan het evenement
             })
             .then(() => {
                 console.log('Evenement succesvol toegevoegd');
                 alert('Evenement succesvol toegevoegd');
                 document.getElementById('event-form').reset();
-                loadCalendar(user.uid); // Herlaad de agenda
                 loadCalendar(user.uid); // Herlaad de agenda
             })
             .catch((error) => {
@@ -250,7 +258,7 @@
     .dashboard-box p, .dashboard-box label {
         color: #d4d4d4;
     }
-    .dashboard-box input, .dashboard-box button, .dashboard-box select, .dashboard-box textarea {
+    .dashboard-box input, .dashboard-box button, .dashboard-box select {
         width: 100%;
         padding: 10px;
         margin: 5px 0;
@@ -265,7 +273,7 @@
     .dashboard-box button:hover {
         background-color: #45a049;
     }
-    .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"], .dashboard-box select, .dashboard-box textarea {
+    .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"], .dashboard-box textarea {
         background-color: #3a3a3a;
         color: white;
     }
@@ -306,17 +314,17 @@
     .notes-popup {
         display: none;
         position: absolute;
-        background-color: #4c4c4c; /* Iets lichtere achtergrondkleur */
+        background-color: #4c4c4c;
         color: white;
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         z-index: 100;
         max-width: 300px;
-        max-height: 200px; /* Maximum height for the popup */
-        overflow-y: auto; /* Scroll if the content exceeds the max height */
-        left: 50%; /* Adjusted position */
-        top: 50%; /* Adjusted position */
+        max-height: 200px;
+        overflow-y: auto;
+        left: 50%;
+        top: 50%;
         transform: translate(-50%, -50%);
     }
     .notes-popup.visible {
