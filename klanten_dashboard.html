@@ -11,7 +11,7 @@
     // Firebase configuratie
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
     import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-    import { getFirestore, doc, getDoc, query, where, getDocs, collection } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+    import { getFirestore, doc, getDoc, query, where, getDocs, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
@@ -41,6 +41,7 @@
                     document.getElementById('customer-email').textContent = user.email;
                     loadProjects(user.uid);
                     loadEmployees(user.uid);
+                    loadCalendar(user.uid);
                 } else {
                     console.log('Geen gegevens gevonden voor deze gebruiker of gebruiker is geen klant.');
                     alert('Ongeldige rol. Neem contact op met de beheerder.');
@@ -119,9 +120,71 @@
             console.error('Fout bij het ophalen van de geregistreerde uren:', error);
         });
     }
-    </script>
 
- <style>
+    // Functie om de agenda te laden
+    function loadCalendar(customerId) {
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: function(fetchInfo, successCallback, failureCallback) {
+                const q = query(collection(db, 'events'), where('customerId', '==', customerId));
+                getDocs(q).then(querySnapshot => {
+                    const events = [];
+                    querySnapshot.forEach(doc => {
+                        const data = doc.data();
+                        events.push({
+                            title: data.title,
+                            start: data.start,
+                            end: data.end,
+                            description: data.description
+                        });
+                    });
+                    successCallback(events);
+                }).catch(error => {
+                    console.error('Fout bij het ophalen van events:', error);
+                    failureCallback(error);
+                });
+            }
+        });
+        calendar.render();
+    }
+
+    // Functie om een nieuw evenement toe te voegen
+    document.getElementById('event-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const user = auth.currentUser;
+        if (user) {
+            const title = document.getElementById('event-title').value;
+            const startDay = document.getElementById('event-start-day').value;
+            const endDay = document.getElementById('event-end-day').value;
+            const startTime = document.getElementById('event-start-time').value || '00:00';
+            const endTime = document.getElementById('event-end-time').value || '23:59';
+            const description = document.getElementById('event-description').value;
+
+            addDoc(collection(db, 'events'), {
+                customerId: user.uid,
+                title: title,
+                start: `${startDay}T${startTime}:00`,
+                end: `${endDay}T${endTime}:00`,
+                description: description
+            })
+            .then(() => {
+                console.log('Evenement succesvol toegevoegd');
+                alert('Evenement succesvol toegevoegd');
+                document.getElementById('event-form').reset();
+                loadCalendar(user.uid); // Herlaad de agenda
+            })
+            .catch((error) => {
+                console.error('Fout bij het toevoegen van evenement:', error);
+                alert('Er is een fout opgetreden bij het toevoegen van evenement: ' + error.message);
+            });
+        } else {
+            alert('Je moet ingelogd zijn om een evenement toe te voegen.');
+        }
+    });
+
+    </script>
+<style>
     body {
         font-family: Arial, sans-serif;
         background-color: #1e1e1e;
@@ -199,6 +262,25 @@
         padding: 8px;
         border: 1px solid #3a3a3a;
     }
+    .notes-popup {
+        display: none;
+        position: absolute;
+        background-color: #4c4c4c; /* Iets lichtere achtergrondkleur */
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+        max-width: 300px;
+        max-height: 200px; /* Maximum height for the popup */
+        overflow-y: auto; /* Scroll if the content exceeds the max height */
+        left: 50%; /* Adjusted position */
+        top: 50%; /* Adjusted position */
+        transform: translate(-50%, -50%);
+    }
+    .notes-popup.visible {
+        display: block;
+    }
 </style>
 </head>
 <body>
@@ -232,5 +314,44 @@
             </tbody>
         </table>
     </div>
+
+    <div class="dashboard-box calendar-container" id="agenda-box">
+        <h2>Gezamenlijke Agenda</h2>
+        <div id="calendar"></div>
+    </div>
+
+    <div class="dashboard-box" id="event-box">
+        <h2>Evenement Toevoegen</h2>
+        <form id="event-form">
+            <div>
+                <label for="event-title">Titel:</label>
+                <input type="text" id="event-title" required>
+            </div>
+            <div>
+                <label for="event-start-day">Startdag:</label>
+                <input type="date" id="event-start-day" required>
+            </div>
+            <div>
+                <label for="event-end-day">Einddag:</label>
+                <input type="date" id="event-end-day" required>
+            </div>
+            <div>
+                <label for="event-start-time">Starttijd:</label>
+                <input type="time" id="event-start-time">
+            </div>
+            <div>
+                <label for="event-end-time">Eindtijd:</label>
+                <input type="time" id="event-end-time">
+            </div>
+            <div>
+                <label for="event-description">Beschrijving:</label>
+                <textarea id="event-description" rows="4"></textarea>
+            </div>
+            <button type="submit">Evenement Toevoegen</button>
+        </form>
+    </div>
+
+    <div id="notes-popup" class="notes-popup"></div>
+
 </body>
 </html>
