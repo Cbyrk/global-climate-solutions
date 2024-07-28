@@ -30,230 +30,230 @@
 
         let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
-        // Controleer of gebruiker is ingelogd
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                console.log('Gebruiker ingelogd:', user);
-                // Haal gegevens op voor de ingelogde werknemer
-                const userDocRef = doc(db, 'employees', user.uid);
-                getDoc(userDocRef).then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
-                        document.getElementById('employee-email').textContent = data.Email;
-                        document.getElementById('employee-address').textContent = data.Adress;
-                        document.getElementById('employee-city').textContent = data.City;
-                        document.getElementById('employee-postal').textContent = data.PostalCode;
-                        document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
-                    } else {
-                        console.log('Geen gegevens gevonden voor deze gebruiker');
-                    }
-                }).catch((error) => {
-                    console.error('Fout bij het ophalen van de gebruikersgegevens:', error);
-                });
-                loadLoggedHours(user.uid, currentWeek);
-                loadCalendar(user.uid);
+// Controleer of gebruiker is ingelogd
+onAuthStateChanged(auth, user => {
+    if (user) {
+        console.log('Gebruiker ingelogd:', user);
+        // Haal gegevens op voor de ingelogde werknemer
+        const userDocRef = doc(db, 'employees', user.uid);
+        getDoc(userDocRef).then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('employee-name').textContent = `${data.FirstName} ${data.LastName}`;
+                document.getElementById('employee-email').textContent = data.Email;
+                document.getElementById('employee-address').textContent = data.Adress;
+                document.getElementById('employee-city').textContent = data.City;
+                document.getElementById('employee-postal').textContent = data.PostalCode;
+                document.getElementById('employee-rate').textContent = `€${data.HourlyRate}`;
             } else {
-                console.log('Geen gebruiker ingelogd.');
-                window.location.href = 'werknemers_login.html';
+                console.log('Geen gegevens gevonden voor deze gebruiker');
             }
+        }).catch((error) => {
+            console.error('Fout bij het ophalen van de gebruikersgegevens:', error);
         });
+        loadLoggedHours(user.uid, currentWeek);
+        loadCalendar(user.uid);
+    } else {
+        console.log('Geen gebruiker ingelogd.');
+        window.location.href = 'werknemers_login.html';
+    }
+});
 
-        // Laad de agenda en initialen bij het laden van de pagina
-        document.addEventListener("DOMContentLoaded", function() {
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    loadLoggedHours(user.uid, currentWeek);
-                    loadCalendar();
-                }
+// Laad de agenda en initialen bij het laden van de pagina
+document.addEventListener("DOMContentLoaded", function() {
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            loadLoggedHours(user.uid, currentWeek);
+            loadCalendar(user.uid);
+        }
+    });
+});
+
+// Functie om urenregistratie te verwerken
+document.getElementById('hours-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (user) {
+        const day = document.getElementById('day').value;
+        const startTime = document.getElementById('start-time').value;
+        const endTime = document.getElementById('end-time').value;
+        const breakTime = document.getElementById('break-time').value;
+        const notes = document.getElementById('notes').value; // Notities veld toevoegen
+        const hoursWorked = calculateHours(startTime, endTime, breakTime);
+
+        addDoc(collection(db, 'hours'), {
+            userId: user.uid,
+            day: new Date(day),
+            startTime: startTime,
+            endTime: endTime,
+            breakTime: breakTime,
+            hoursWorked: hoursWorked,
+            notes: notes // Notities opslaan in Firestore
+        })
+        .then(() => {
+            console.log('Uren succesvol geregistreerd');
+            alert('Uren succesvol geregistreerd');
+            document.getElementById('hours-form').reset();
+            loadLoggedHours(user.uid, currentWeek); // Herlaad de geregistreerde uren
+        })
+        .catch((error) => {
+            console.error('Fout bij het registreren van uren:', error);
+            alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
+        });
+    } else {
+        alert('Je moet ingelogd zijn om uren te registreren.');
+    }
+});
+
+// Functie om gewerkte uren te berekenen
+function calculateHours(startTime, endTime, breakTime) {
+    const start = new Date(`1970-01-01T${startTime}Z`);
+    const end = new Date(`1970-01-01T${endTime}Z`);
+    const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
+    const breakHours = breakTime / 60; // pauzetijd in uren
+    return diff - breakHours;
+}
+
+// Functie om de huidige week te berekenen
+function getWeekRange(weekOffset) {
+    const now = new Date();
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1 + (weekOffset * 7))); // Start op maandag
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    return { start: startOfWeek, end: endOfWeek };
+}
+
+// Functie om geregistreerde uren op te halen
+function loadLoggedHours(userId, weekOffset) {
+    const weekRange = getWeekRange(weekOffset);
+    const q = query(collection(db, 'hours'), where('userId', '==', userId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
+    getDocs(q).then(querySnapshot => {
+        const hoursLogged = document.getElementById('hours-logged');
+        hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
+        querySnapshot.forEach(doc => {
+            const hours = doc.data();
+            const hoursItem = document.createElement('div');
+            hoursItem.className = 'hours-item';
+            hoursItem.innerHTML = `
+                <span>${hours.day.toDate().toISOString().split('T')[0]}</span>
+                <span>${hours.startTime}</span>
+                <span>${hours.breakTime} min</span>
+                <span>${hours.endTime}</span>
+                <span>${hours.hoursWorked} uur</span>
+                <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
+            `;
+            hoursLogged.appendChild(hoursItem);
+        });
+        // Voeg event listener toe na het toevoegen van items
+        document.querySelectorAll('.notes-item').forEach(item => {
+            item.addEventListener('click', function() {
+                showNotePopup(this.getAttribute('data-notes'));
             });
         });
+    }).catch((error) => {
+        console.error('Fout bij het ophalen van de geregistreerde uren:', error);
+    });
+}
 
-        // Functie om urenregistratie te verwerken
-        document.getElementById('hours-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (user) {
-                const day = document.getElementById('day').value;
-                const startTime = document.getElementById('start-time').value;
-                const endTime = document.getElementById('end-time').value;
-                const breakTime = document.getElementById('break-time').value;
-                const notes = document.getElementById('notes').value; // Notities veld toevoegen
-                const hoursWorked = calculateHours(startTime, endTime, breakTime);
+// Functie om notitie pop-up te tonen
+function showNotePopup(noteContent) {
+    const popup = document.getElementById('notes-popup');
+    popup.textContent = noteContent;
+    popup.classList.add('visible');
+}
 
-                addDoc(collection(db, 'hours'), {
-                    userId: user.uid,
-                    day: new Date(day),
-                    startTime: startTime,
-                    endTime: endTime,
-                    breakTime: breakTime,
-                    hoursWorked: hoursWorked,
-                    notes: notes // Notities opslaan in Firestore
-                })
-                .then(() => {
-                    console.log('Uren succesvol geregistreerd');
-                    alert('Uren succesvol geregistreerd');
-                    document.getElementById('hours-form').reset();
-                    loadLoggedHours(user.uid, currentWeek); // Herlaad de geregistreerde uren
-                })
-                .catch((error) => {
-                    console.error('Fout bij het registreren van uren:', error);
-                    alert('Er is een fout opgetreden bij het registreren van uren: ' + error.message);
-                });
-            } else {
-                alert('Je moet ingelogd zijn om uren te registreren.');
-            }
-        });
+// Sluit notitie pop-up wanneer er buiten wordt geklikt
+window.onclick = function(event) {
+    const popup = document.getElementById('notes-popup');
+    if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
+        popup.classList.remove('visible');
+    }
+}
 
-        // Functie om gewerkte uren te berekenen
-        function calculateHours(startTime, endTime, breakTime) {
-            const start = new Date(`1970-01-01T${startTime}Z`);
-            const end = new Date(`1970-01-01T${endTime}Z`);
-            const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
-            const breakHours = breakTime / 60; // pauzetijd in uren
-            return diff - breakHours;
-        }
+// Functie om naar de vorige week te gaan
+function previousWeek() {
+    if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
+        currentWeek--;
+        loadLoggedHours(auth.currentUser.uid, currentWeek);
+    }
+}
 
-        // Functie om de huidige week te berekenen
-        function getWeekRange(weekOffset) {
-            const now = new Date();
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1 + (weekOffset * 7))); // Start op maandag
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            return { start: startOfWeek, end: endOfWeek };
-        }
+// Functie om naar de volgende week te gaan
+function nextWeek() {
+    currentWeek++;
+    loadLoggedHours(auth.currentUser.uid, currentWeek);
+}
 
-        // Functie om geregistreerde uren op te halen
-        function loadLoggedHours(userId, weekOffset) {
-            const weekRange = getWeekRange(weekOffset);
-            const q = query(collection(db, 'hours'), where('userId', '==', userId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
-            getDocs(q).then(querySnapshot => {
-                const hoursLogged = document.getElementById('hours-logged');
-                hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-                querySnapshot.forEach(doc => {
-                    const hours = doc.data();
-                    const hoursItem = document.createElement('div');
-                    hoursItem.className = 'hours-item';
-                    hoursItem.innerHTML = `
-                        <span>${hours.day.toDate().toISOString().split('T')[0]}</span>
-                        <span>${hours.startTime}</span>
-                        <span>${hours.breakTime} min</span>
-                        <span>${hours.endTime}</span>
-                        <span>${hours.hoursWorked} uur</span>
-                        <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
-                    `;
-                    hoursLogged.appendChild(hoursItem);
-                });
-                // Voeg event listener toe na het toevoegen van items
-                document.querySelectorAll('.notes-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        showNotePopup(this.getAttribute('data-notes'));
-                    });
-                });
-            }).catch((error) => {
-                console.error('Fout bij het ophalen van de geregistreerde uren:', error);
-            });
-        }
+// Functie om de agenda te laden
+function loadCalendar() {
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        events: function(fetchInfo, successCallback, failureCallback) {
+            const q1 = query(collection(db, 'events'), where('assignedTo', '==', auth.currentUser.uid));
+            const q2 = query(collection(db, 'events'), where('assignedTo', '==', 'all'));
+            const q3 = query(collection(db, 'events'), where('type', '==', 'leave'), where('userId', '==', auth.currentUser.uid));
 
-        // Functie om notitie pop-up te tonen
-        function showNotePopup(noteContent) {
-            const popup = document.getElementById('notes-popup');
-            popup.textContent = noteContent;
-            popup.classList.add('visible');
-        }
-
-        // Sluit notitie pop-up wanneer er buiten wordt geklikt
-        window.onclick = function(event) {
-            const popup = document.getElementById('notes-popup');
-            if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
-                popup.classList.remove('visible');
-            }
-        }
-
-        // Functie om naar de vorige week te gaan
-        function previousWeek() {
-            if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
-                currentWeek--;
-                loadLoggedHours(auth.currentUser.uid, currentWeek);
-            }
-        }
-
-        // Functie om naar de volgende week te gaan
-        function nextWeek() {
-            currentWeek++;
-            loadLoggedHours(auth.currentUser.uid, currentWeek);
-        }
-
-        // Functie om de agenda te laden
-        function loadCalendar() {
-            const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    const q1 = query(collection(db, 'events'), where('assignedTo', '==', auth.currentUser.uid));
-                    const q2 = query(collection(db, 'events'), where('assignedTo', '==', 'all'));
-                    const q3 = query(collection(db, 'events'), where('type', '==', 'leave'), where('userId', '==', auth.currentUser.uid));
-
-                    Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)])
-                        .then(([assignedEvents, allEvents, leaveEvents]) => {
-                            const events = [];
+            Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)])
+                .then(([assignedEvents, allEvents, leaveEvents]) => {
+                    const events = [];
                     
-                            assignedEvents.forEach(doc => {
-                                const data = doc.data();
-                                events.push({
-                                    title: data.title,
-                                    start: data.start,
-                                    end: data.end,
-                                    backgroundColor: data.assignedTo === 'all' ? 'green' : 'pink',
-                                    textColor: 'black',
-                                    description: data.description
-                                });
-                            });
-
-                            allEvents.forEach(doc => {
-                                const data = doc.data();
-                                events.push({
-                                    title: data.title,
-                                    start: data.start,
-                                    end: data.end,
-                                    backgroundColor: 'green',
-                                    textColor: 'black',
-                                    description: data.description
-                                });
-                            });
-
-                            leaveEvents.forEach(doc => {
-                                const data = doc.data();
-                                events.push({
-                                    title: 'Vrije dag',
-                                    start: data.start,
-                                    end: data.end,
-                                    backgroundColor: 'blue',
-                                    textColor: 'black',
-                                    description: data.description
-                                });
-                            });
-
-                            successCallback(events);
-                        })
-                        .catch(error => {
-                            console.error('Fout bij het ophalen van events:', error);
-                            failureCallback(error);
+                    assignedEvents.forEach(doc => {
+                        const data = doc.data();
+                        events.push({
+                            title: data.title,
+                            start: data.start,
+                            end: data.end,
+                            backgroundColor: data.assignedTo === 'all' ? 'green' : 'pink',
+                            textColor: 'black',
+                            description: data.description
                         });
-                },
-                eventDidMount: function(info) {
-                    if (info.event.extendedProps.description) {
-                        tippy(info.el, {
-                            content: info.event.extendedProps.description,
+                    });
+
+                    allEvents.forEach(doc => {
+                        const data = doc.data();
+                        events.push({
+                            title: data.title,
+                            start: data.start,
+                            end: data.end,
+                            backgroundColor: 'green',
+                            textColor: 'black',
+                            description: data.description
                         });
-                    }
-                }
-            });
-            calendar.render();
+                    });
+
+                    leaveEvents.forEach(doc => {
+                        const data = doc.data();
+                        events.push({
+                            title: 'Vrije dag',
+                            start: data.start,
+                            end: data.end,
+                            backgroundColor: 'blue',
+                            textColor: 'black',
+                            description: data.description
+                        });
+                    });
+
+                    successCallback(events);
+                })
+                .catch(error => {
+                    console.error('Fout bij het ophalen van events:', error);
+                    failureCallback(error);
+                });
+        },
+        eventDidMount: function(info) {
+            if (info.event.extendedProps.description) {
+                tippy(info.el, {
+                    content: info.event.extendedProps.description,
+                });
+            }
         }
+    });
+    calendar.render();
+}
 
-        </script>
-
+</script>
+    
     <style>
         body {
             font-family: Arial, sans-serif;
