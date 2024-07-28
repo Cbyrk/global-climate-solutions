@@ -64,12 +64,12 @@
             onAuthStateChanged(auth, user => {
                 if (user) {
                     loadLoggedHours(user.uid, currentWeek);
-                    loadCalendar(user.uid);
+                    loadCalendar();
                 }
             });
         });
 
-        // Functie voor urenregistratie
+        // Functie om urenregistratie te verwerken
         document.getElementById('hours-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const user = auth.currentUser;
@@ -184,111 +184,75 @@
             loadLoggedHours(auth.currentUser.uid, currentWeek);
         }
 
-        // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
-        window.previousWeek = previousWeek;
-        window.nextWeek = nextWeek;
-
         // Functie om de agenda te laden
-        function loadCalendar(userId) {
+        function loadCalendar() {
             const calendarEl = document.getElementById('calendar');
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    const q = query(collection(db, 'events'), where('assignedTo', 'in', ['all', userId]));
-                    getDocs(q).then(querySnapshot => {
-                        const events = [];
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            events.push({
-                                title: data.title,
-                                start: data.start,
-                                end: data.end,
-                                description: data.description,
-                                backgroundColor: data.backgroundColor || 'green', // Default to green if no color
-                                textColor: data.textColor || 'black'
+                    const q1 = query(collection(db, 'events'), where('assignedTo', '==', auth.currentUser.uid));
+                    const q2 = query(collection(db, 'events'), where('assignedTo', '==', 'all'));
+                    const q3 = query(collection(db, 'events'), where('type', '==', 'leave'), where('userId', '==', auth.currentUser.uid));
+
+                    Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)])
+                        .then(([assignedEvents, allEvents, leaveEvents]) => {
+                            const events = [];
+                    
+                            assignedEvents.forEach(doc => {
+                                const data = doc.data();
+                                events.push({
+                                    title: data.title,
+                                    start: data.start,
+                                    end: data.end,
+                                    backgroundColor: data.assignedTo === 'all' ? 'green' : 'pink',
+                                    textColor: 'black',
+                                    description: data.description
+                                });
                             });
+
+                            allEvents.forEach(doc => {
+                                const data = doc.data();
+                                events.push({
+                                    title: data.title,
+                                    start: data.start,
+                                    end: data.end,
+                                    backgroundColor: 'green',
+                                    textColor: 'black',
+                                    description: data.description
+                                });
+                            });
+
+                            leaveEvents.forEach(doc => {
+                                const data = doc.data();
+                                events.push({
+                                    title: 'Vrije dag',
+                                    start: data.start,
+                                    end: data.end,
+                                    backgroundColor: 'blue',
+                                    textColor: 'black',
+                                    description: data.description
+                                });
+                            });
+
+                            successCallback(events);
+                        })
+                        .catch(error => {
+                            console.error('Fout bij het ophalen van events:', error);
+                            failureCallback(error);
                         });
-                        successCallback(events);
-                    }).catch(error => {
-                        console.error('Fout bij het ophalen van events:', error);
-                        failureCallback(error);
-                    });
                 },
-                eventClick: function(info) {
-                    alert('Beschrijving: ' + info.event.extendedProps.description);
+                eventDidMount: function(info) {
+                    if (info.event.extendedProps.description) {
+                        tippy(info.el, {
+                            content: info.event.extendedProps.description,
+                        });
+                    }
                 }
             });
             calendar.render();
         }
 
-        // Functie voor vrije dagen aanvragen
-        document.getElementById('leave-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (user) {
-                const startDay = document.getElementById('leave-start-day').value;
-                const endDay = document.getElementById('leave-end-day').value;
-                const startTime = document.getElementById('leave-start-time').value || '00:00';
-                const endTime = document.getElementById('leave-end-time').value || '23:59';
-                const description = document.getElementById('leave-description').value;
-
-                addDoc(collection(db, 'events'), {
-                    title: 'Vrije dag',
-                    start: `${startDay}T${startTime}:00`,
-                    end: `${endDay}T${endTime}:00`,
-                    description: description,
-                    assignedTo: user.uid,
-                    backgroundColor: 'pink', // Specifieke kleur voor vrije dagen
-                    textColor: 'black'
-                })
-                .then(() => {
-                    console.log('Vrije dag succesvol aangevraagd');
-                    alert('Vrije dag succesvol aangevraagd');
-                    document.getElementById('leave-form').reset();
-                    loadCalendar(user.uid); // Herlaad de agenda
-                })
-                .catch((error) => {
-                    console.error('Fout bij het aanvragen van vrije dag:', error);
-                    alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
-                });
-                } else {
-                alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
-            }
-        });
-
-        // Functie om de agenda te laden met toegewezen evenementen
-        function loadCalendar(userId) {
-            const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    const q = query(collection(db, 'events'), where('assignedTo', 'in', ['all', userId]));
-                    getDocs(q).then(querySnapshot => {
-                        const events = [];
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            events.push({
-                                title: data.title,
-                                start: data.start,
-                                end: data.end,
-                                description: data.description,
-                                backgroundColor: data.backgroundColor || 'green', // Default to green if no color
-                                textColor: data.textColor || 'black'
-                            });
-                        });
-                        successCallback(events);
-                    }).catch(error => {
-                        console.error('Fout bij het ophalen van events:', error);
-                        failureCallback(error);
-                    });
-                },
-                eventClick: function(info) {
-                    alert('Beschrijving: ' + info.event.extendedProps.description);
-                }
-            });
-            calendar.render();
-        }
-    </script>
+        </script>
 
     <style>
         body {
