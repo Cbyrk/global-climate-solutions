@@ -168,6 +168,10 @@
             currentWeek++;
             loadLoggedHours(auth.currentUser.uid, currentWeek);
         }
+        
+        // Voeg deze functies toe aan het window object zodat ze beschikbaar zijn in de globale scope
+        window.previousWeek = previousWeek;
+        window.nextWeek = nextWeek;
 
         // Functie om de agenda te laden
         function loadCalendar(customerId) {
