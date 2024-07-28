@@ -30,24 +30,6 @@
 
         let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
-        // Functie om naar de vorige week te gaan
-        function previousWeek() {
-            if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
-                currentWeek--;
-                loadLoggedHours(auth.currentUser.uid, currentWeek);
-            }
-        }
-
-        // Functie om naar de volgende week te gaan
-        function nextWeek() {
-            currentWeek++;
-            loadLoggedHours(auth.currentUser.uid, currentWeek);
-        }
-
-        // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
-        window.previousWeek = previousWeek;
-        window.nextWeek = nextWeek
-        
         // Controleer of gebruiker is ingelogd
         onAuthStateChanged(auth, user => {
             if (user) {
@@ -188,13 +170,27 @@
             }
         }
 
+        // Functie om naar de vorige week te gaan
+        function previousWeek() {
+            if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
+                currentWeek--;
+                loadLoggedHours(auth.currentUser.uid, currentWeek);
+            }
+        }
+
+        // Functie om naar de volgende week te gaan
+        function nextWeek() {
+            currentWeek++;
+            loadLoggedHours(auth.currentUser.uid, currentWeek);
+        }
+
         // Functie om de agenda te laden
         function loadCalendar(userId) {
             const calendarEl = document.getElementById('calendar');
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    const q = query(collection(db, 'events'), where('assignedTo', '==', userId));
+                    const q = query(collection(db, 'events'), where('userId', '==', userId));
                     getDocs(q).then(querySnapshot => {
                         const events = [];
                         querySnapshot.forEach(doc => {
@@ -203,9 +199,9 @@
                                 title: data.title,
                                 start: data.start,
                                 end: data.end,
-                                description: data.description,
-                                backgroundColor: '#ADD8E6', // Blauw voor werknemer
-                                textColor: '#000000' // Zwarte tekst
+                                backgroundColor: data.eventType === 'leave' ? 'blue' : 'pink', // vrije dag blauw, evenement roze
+                                textColor: 'black',
+                                description: data.description
                             });
                         });
                         successCallback(events);
@@ -220,6 +216,44 @@
             });
             calendar.render();
         }
+
+        // Functie voor vrije dagen aanvragen
+        document.getElementById('leave-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (user) {
+                const startDay = document.getElementById('leave-start-day').value;
+                const endDay = document.getElementById('leave-end-day').value;
+                const startTime = document.getElementById('leave-start-time').value || '00:00';
+                const endTime = document.getElementById('leave-end-time').value || '23:59';
+                const description = document.getElementById('leave-description').value;
+
+                addDoc(collection(db, 'events'), {
+                    userId: user.uid,
+                    title: 'Vrije dag',
+                    start: `${startDay}T${startTime}:00`,
+                    end: `${endDay}T${endTime}:00`,
+                    description: description,
+                    eventType: 'leave' // mark as leave event
+                })
+                .then(() => {
+                    console.log('Vrije dag succesvol aangevraagd');
+                    alert('Vrije dag succesvol aangevraagd');
+                    document.getElementById('leave-form').reset();
+                    loadCalendar(user.uid); // Herlaad de agenda
+                })
+                .catch((error) => {
+                    console.error('Fout bij het aanvragen van vrije dag:', error);
+                    alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
+                });
+            } else {
+                alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
+            }
+        });
+
+        // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
+        window.previousWeek = previousWeek;
+        window.nextWeek = nextWeek;
     </script>
 
     <style>
@@ -415,5 +449,10 @@
 
     <div id="notes-popup" class="notes-popup"></div>
 
+    <script>
+        // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
+        window.previousWeek = previousWeek;
+        window.nextWeek = nextWeek;
+    </script>
 </body>
 </html>
