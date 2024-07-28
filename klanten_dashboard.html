@@ -6,10 +6,7 @@
     <title>Klant Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/themes/light.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
     <script type="module">
     // Firebase configuratie
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
@@ -30,6 +27,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
     // Controleer of gebruiker is ingelogd
     onAuthStateChanged(auth, user => {
@@ -79,26 +78,20 @@
         const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
         getDocs(q).then(querySnapshot => {
             const employeeSelect = document.getElementById('employee-select');
-            const assignToSelect = document.getElementById('assign-to');
             employeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
-            assignToSelect.innerHTML = '<option value="all">Alle werknemers</option>'; // Voeg optie voor alle werknemers toe
             querySnapshot.forEach(doc => {
                 const employee = doc.data();
                 const employeeOption = document.createElement('option');
-                const assignToOption = document.createElement('option');
                 employeeOption.value = doc.id;
                 employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
-                assignToOption.value = doc.id;
-                assignToOption.textContent = `${employee.FirstName} ${employee.LastName}`;
                 employeeSelect.appendChild(employeeOption);
-                assignToSelect.appendChild(assignToOption);
             });
 
             // Event listener voor werknemer selectie
             employeeSelect.addEventListener('change', function() {
                 const employeeId = employeeSelect.value;
                 if (employeeId) {
-                    loadLoggedHours(employeeId);
+                    loadLoggedHours(employeeId, currentWeek);
                 } else {
                     document.getElementById('hours-logged').innerHTML = ''; // Leeg de lijst als geen werknemer is geselecteerd
                 }
@@ -106,9 +99,28 @@
         });
     }
 
+    // Functie om gewerkte uren te berekenen
+    function calculateHours(startTime, endTime, breakTime) {
+        const start = new Date(`1970-01-01T${startTime}Z`);
+        const end = new Date(`1970-01-01T${endTime}Z`);
+        const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
+        const breakHours = breakTime / 60; // pauzetijd in uren
+        return diff - breakHours;
+    }
+
+    // Functie om de huidige week te berekenen
+    function getWeekRange(weekOffset) {
+        const now = new Date();
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1 + (weekOffset * 7))); // Start op maandag
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        return { start: startOfWeek, end: endOfWeek };
+    }
+
     // Functie om geregistreerde uren op te halen
-    function loadLoggedHours(employeeId) {
-        const q = query(collection(db, 'hours'), where('userId', '==', employeeId));
+    function loadLoggedHours(employeeId, weekOffset) {
+        const weekRange = getWeekRange(weekOffset);
+        const q = query(collection(db, 'hours'), where('userId', '==', employeeId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
         getDocs(q).then(querySnapshot => {
             const hoursLogged = document.getElementById('hours-logged');
             hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
@@ -126,10 +138,49 @@
                 `;
                 hoursLogged.appendChild(hoursItem);
             });
+            // Voeg event listener toe na het toevoegen van items
+            document.querySelectorAll('.notes-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    showNotePopup(this.getAttribute('data-notes'));
+                });
+            });
         }).catch((error) => {
             console.error('Fout bij het ophalen van de geregistreerde uren:', error);
         });
     }
+
+    // Functie om notitie pop-up te tonen
+    function showNotePopup(noteContent) {
+        const popup = document.getElementById('notes-popup');
+        popup.textContent = noteContent;
+        popup.classList.add('visible');
+    }
+
+    // Sluit notitie pop-up wanneer er buiten wordt geklikt
+    window.onclick = function(event) {
+        const popup = document.getElementById('notes-popup');
+        if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
+            popup.classList.remove('visible');
+        }
+    }
+
+    // Functie om naar de vorige week te gaan
+    function previousWeek() {
+        if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
+            currentWeek--;
+            loadLoggedHours(document.getElementById('employee-select').value, currentWeek);
+        }
+    }
+
+    // Functie om naar de volgende week te gaan
+    function nextWeek() {
+        currentWeek++;
+        loadLoggedHours(document.getElementById('employee-select').value, currentWeek);
+    }
+
+    // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
+    window.previousWeek = previousWeek;
+    window.nextWeek = nextWeek;
 
     // Functie om de agenda te laden
     function loadCalendar(customerId) {
@@ -146,9 +197,10 @@
                             title: data.title,
                             start: data.start,
                             end: data.end,
-                            backgroundColor: data.assignedTo === 'all' ? 'green' : (data.assignedTo === 'employee1' ? 'pink' : 'lightblue'),
-                            textColor: 'black',
-                            description: data.description
+                            description: data.description,
+                            backgroundColor: data.assignedTo === 'all' ? 'green' :
+                                             data.assignedTo === 'mehmetCanBayrakId' ? 'pink' : 'lightblue',
+                            textColor: 'black'
                         });
                     });
                     successCallback(events);
@@ -161,7 +213,6 @@
                 if (info.event.extendedProps.description) {
                     tippy(info.el, {
                         content: info.event.extendedProps.description,
-                        theme: 'light'
                     });
                 }
             }
@@ -245,7 +296,7 @@
     .dashboard-box button:hover {
         background-color: #45a049;
     }
-    .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"], .dashboard-box textarea {
+    .dashboard-box input[type="number"], .dashboard-box input[type="date"], .dashboard-box input[type="time"] {
         background-color: #3a3a3a;
         color: white;
     }
@@ -335,6 +386,10 @@
             <tbody id="hours-logged">
             </tbody>
         </table>
+        <div class="actions">
+            <button onclick="previousWeek()">Vorige Week</button>
+            <button onclick="nextWeek()">Volgende Week</button>
+        </div>
     </div>
 
     <div class="dashboard-box calendar-container" id="agenda-box">
@@ -372,7 +427,7 @@
             <div>
                 <label for="assign-to">Toewijzen aan:</label>
                 <select id="assign-to">
-                    <option value="all">Alle werknemers</option>
+                    <option value="all">Alle Werknemers</option>
                 </select>
             </div>
             <button type="submit">Evenement Toevoegen</button>
