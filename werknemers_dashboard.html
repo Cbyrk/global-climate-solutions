@@ -30,24 +30,6 @@
 
         let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
-        // Functie om naar de vorige week te gaan
-        function previousWeek() {
-            if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
-                currentWeek--;
-                loadLoggedHours(auth.currentUser.uid, currentWeek);
-            }
-        }
-
-        // Functie om naar de volgende week te gaan
-        function nextWeek() {
-            currentWeek++;
-            loadLoggedHours(auth.currentUser.uid, currentWeek);
-        }
-
-        // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
-        window.previousWeek = previousWeek;
-        window.nextWeek = nextWeek;
-        
         // Controleer of gebruiker is ingelogd
         onAuthStateChanged(auth, user => {
             if (user) {
@@ -188,13 +170,31 @@
             }
         }
 
+        // Functie om naar de vorige week te gaan
+        function previousWeek() {
+            if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
+                currentWeek--;
+                loadLoggedHours(auth.currentUser.uid, currentWeek);
+            }
+        }
+
+        // Functie om naar de volgende week te gaan
+        function nextWeek() {
+            currentWeek++;
+            loadLoggedHours(auth.currentUser.uid, currentWeek);
+        }
+
+        // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
+        window.previousWeek = previousWeek;
+        window.nextWeek = nextWeek;
+
         // Functie om de agenda te laden
         function loadCalendar(userId) {
             const calendarEl = document.getElementById('calendar');
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    const q = query(collection(db, 'events'), where('assignedTo', 'in', [userId, 'all']));
+                    const q = query(collection(db, 'events'), where('assignedTo', 'in', ['all', userId]));
                     getDocs(q).then(querySnapshot => {
                         const events = [];
                         querySnapshot.forEach(doc => {
@@ -204,8 +204,8 @@
                                 start: data.start,
                                 end: data.end,
                                 description: data.description,
-                                backgroundColor: data.backgroundColor || 'blue', // Default to blue if no color
-                                textColor: data.textColor || 'white'
+                                backgroundColor: data.backgroundColor || 'green', // Default to green if no color
+                                textColor: data.textColor || 'black'
                             });
                         });
                         successCallback(events);
@@ -238,8 +238,8 @@
                     end: `${endDay}T${endTime}:00`,
                     description: description,
                     assignedTo: user.uid,
-                    backgroundColor: 'blue', // Kleur voor vrije dag
-                    textColor: 'white'
+                    backgroundColor: 'pink', // Specifieke kleur voor vrije dagen
+                    textColor: 'black'
                 })
                 .then(() => {
                     console.log('Vrije dag succesvol aangevraagd');
@@ -251,10 +251,43 @@
                     console.error('Fout bij het aanvragen van vrije dag:', error);
                     alert('Er is een fout opgetreden bij het aanvragen van vrije dag: ' + error.message);
                 });
-            } else {
+                } else {
                 alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
             }
         });
+
+        // Functie om de agenda te laden met toegewezen evenementen
+        function loadCalendar(userId) {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: function(fetchInfo, successCallback, failureCallback) {
+                    const q = query(collection(db, 'events'), where('assignedTo', 'in', ['all', userId]));
+                    getDocs(q).then(querySnapshot => {
+                        const events = [];
+                        querySnapshot.forEach(doc => {
+                            const data = doc.data();
+                            events.push({
+                                title: data.title,
+                                start: data.start,
+                                end: data.end,
+                                description: data.description,
+                                backgroundColor: data.backgroundColor || 'green', // Default to green if no color
+                                textColor: data.textColor || 'black'
+                            });
+                        });
+                        successCallback(events);
+                    }).catch(error => {
+                        console.error('Fout bij het ophalen van events:', error);
+                        failureCallback(error);
+                    });
+                },
+                eventClick: function(info) {
+                    alert('Beschrijving: ' + info.event.extendedProps.description);
+                }
+            });
+            calendar.render();
+        }
     </script>
 
     <style>
@@ -421,34 +454,11 @@
         </form>
     </div>
 
-    <div class="dashboard-box" id="hours-logged-box">
-        <h2>Geregistreerde Uren</h2>
-        <table class="hours-table">
-            <thead>
-                <tr>
-                    <th>Datum</th>
-                    <th>Begin Tijd</th>
-                    <th>Pauze in Minuten</th>
-                    <th>Eind Tijd</th>
-                    <th>Totaal Uur</th>
-                    <th>Notities</th>
-                </tr>
-            </thead>
-            <tbody id="hours-logged">
-            </tbody>
-        </table>
-        <div class="actions">
-            <button onclick="previousWeek()">Vorige Week</button>
-            <button onclick="nextWeek()">Volgende Week</button>
-        </div>
-    </div>
-
     <div class="dashboard-box calendar-container" id="agenda-box">
         <h2>Gezamenlijke Agenda</h2>
         <div id="calendar"></div>
     </div>
 
     <div id="notes-popup" class="notes-popup"></div>
-
 </body>
 </html>
