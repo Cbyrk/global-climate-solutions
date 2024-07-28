@@ -194,7 +194,7 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    const q = query(collection(db, 'events'), where('assignedTo', '==', userId));
+                    const q = query(collection(db, 'events'), where('assignedTo', 'in', [userId, 'all']));
                     getDocs(q).then(querySnapshot => {
                         const events = [];
                         querySnapshot.forEach(doc => {
@@ -204,8 +204,8 @@
                                 start: data.start,
                                 end: data.end,
                                 description: data.description,
-                                backgroundColor: data.backgroundColor,
-                                textColor: data.textColor
+                                backgroundColor: data.backgroundColor || 'blue', // Default to blue if no color
+                                textColor: data.textColor || 'white'
                             });
                         });
                         successCallback(events);
@@ -256,6 +256,7 @@
             }
         });
     </script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
