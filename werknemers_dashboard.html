@@ -46,7 +46,7 @@
 
         // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
         window.previousWeek = previousWeek;
-        window.nextWeek = nextWeek;
+        window.nextWeek = nextWeek
         
         // Controleer of gebruiker is ingelogd
         onAuthStateChanged(auth, user => {
@@ -162,7 +162,6 @@
                     `;
                     hoursLogged.appendChild(hoursItem);
                 });
-
                 // Voeg event listener toe na het toevoegen van items
                 document.querySelectorAll('.notes-item').forEach(item => {
                     item.addEventListener('click', function() {
@@ -200,17 +199,13 @@
                         const events = [];
                         querySnapshot.forEach(doc => {
                             const data = doc.data();
-                            let color = 'pink';
-                            if (data.assignedTo) {
-                                color = data.assignedTo === userId ? 'blue' : 'green';
-                            }
                             events.push({
                                 title: data.title,
                                 start: data.start,
                                 end: data.end,
                                 description: data.description,
-                                backgroundColor: color,
-                                textColor: 'black'
+                                backgroundColor: '#ADD8E6', // Blauw voor werknemer
+                                textColor: '#000000' // Zwarte tekst
                             });
                         });
                         successCallback(events);
@@ -220,12 +215,13 @@
                     });
                 },
                 eventClick: function(info) {
-                    alert(info.event.title + "\n" + info.event.extendedProps.description);
+                    alert(info.event.extendedProps.description);
                 }
             });
             calendar.render();
         }
     </script>
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -380,7 +376,7 @@
             </div>
             <div>
                 <label for="leave-end-time">Eindtijd:</label>
-                                <input type="time" id="leave-end-time">
+                <input type="time" id="leave-end-time">
             </div>
             <div>
                 <label for="leave-description">Beschrijving:</label>
