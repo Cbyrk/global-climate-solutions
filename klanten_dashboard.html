@@ -130,7 +130,7 @@
 
     // Functie om werknemers op te halen en keuzemenu te vullen voor evenement toevoegen
     function loadEmployeesForEvent(customerId) {
-        const employeeSelect = document.getElementById('event-employee-select');
+        const employeeSelect = document.getElementById('event-assigned-to');
         if (employeeSelect) {
             const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
             getDocs(q).then(querySnapshot => {
@@ -146,13 +146,13 @@
                 console.error('Fout bij het ophalen van werknemers voor evenement:', error);
             });
         } else {
-            console.error('Element "event-employee-select" niet gevonden');
+            console.error('Element "event-assigned-to" niet gevonden');
         }
     }
 
     // Functie om werknemers op te halen en keuzemenu te vullen voor download geregistreerde uren
     function loadEmployeesForDownload(customerId) {
-        const employeeSelect = document.getElementById('download-employee-select');
+        const employeeSelect = document.getElementById('employee-download-select');
         if (employeeSelect) {
             const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
             getDocs(q).then(querySnapshot => {
@@ -168,7 +168,7 @@
                 console.error('Fout bij het ophalen van werknemers voor download:', error);
             });
         } else {
-            console.error('Element "download-employee-select" niet gevonden');
+            console.error('Element "employee-download-select" niet gevonden');
         }
     }
         
