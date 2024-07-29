@@ -6,179 +6,182 @@
     <title>Klant Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
     <script type="module">
-        // Firebase configuratie
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, doc, getDoc, query, where, getDocs, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+    // Firebase configuratie
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+    import { getFirestore, doc, getDoc, query, where, getDocs, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
-            authDomain: "register-employee-gcs.firebaseapp.com",
-            projectId: "register-employee-gcs",
-            storageBucket: "register-employee-gcs.appspot.com",
-            messagingSenderId: "823490257683",
-            appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
-            measurementId: "G-Q68YZMSFJX"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
+        authDomain: "register-employee-gcs.firebaseapp.com",
+        projectId: "register-employee-gcs",
+        storageBucket: "register-employee-gcs.appspot.com",
+        messagingSenderId: "823490257683",
+        appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
+        measurementId: "G-Q68YZMSFJX"
+    };
 
-        // Firebase initialiseren
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    // Firebase initialiseren
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-        // Controleer of gebruiker is ingelogd
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                console.log('Gebruiker ingelogd:', user);
-                // Haal gegevens op voor de ingelogde klant
-                const userDocRef = doc(db, 'customers', user.uid);
-                getDoc(userDocRef).then(doc => {
-                    if (doc.exists && doc.data().Role === 'Klant') {
-                        const data = doc.data();
-                        document.getElementById('customer-name').textContent = data['Customer Name'];
-                        document.getElementById('customer-email').textContent = user.email;
-                        loadProjects(user.uid);
-                        loadEmployees(user.uid);
-                        loadCalendar(user.uid);
-                    } else {
-                        console.log('Geen gegevens gevonden voor deze gebruiker of gebruiker is geen klant.');
-                        alert('Ongeldige rol. Neem contact op met de beheerder.');
-                        auth.signOut().then(() => {
-                            window.location.href = 'klanten_login.html';
-                        });
-                    }
-                });
-            } else {
-                console.log('Geen gebruiker ingelogd.');
-                window.location.href = 'klanten_login.html';
-            }
-        });
+    let currentWeek = 0; // Huidige week-index (0 = deze week, -1 = vorige week, 1 = volgende week, etc.)
 
-        // Functie om projecten op te halen
-        function loadProjects(customerId) {
-            const q = query(collection(db, 'projects'), where('customerId', '==', customerId));
-            getDocs(q).then(querySnapshot => {
-                const projectList = document.getElementById('project-list');
-                projectList.innerHTML = ''; // Leeg de lijst voor nieuwe items
-                querySnapshot.forEach(doc => {
-                    const project = doc.data();
-                    const projectItem = document.createElement('div');
-                    projectItem.textContent = `Project: ${project.title}`;
-                    projectList.appendChild(projectItem);
-                });
-            });
-        }
-
-        // Functie om werknemers op te halen en keuzemenu te vullen
-        function loadEmployees(customerId) {
-            const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
-            getDocs(q).then(querySnapshot => {
-                const employeeSelect = document.getElementById('employee-select');
-                const employeeDownloadSelect = document.getElementById('employee-download-select');
-                employeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
-                employeeDownloadSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
-                querySnapshot.forEach(doc => {
-                    const employee = doc.data();
-                    const employeeOption = document.createElement('option');
-                    const employeeDownloadOption = document.createElement('option');
-                    employeeOption.value = doc.id;
-                    employeeDownloadOption.value = doc.id;
-                    employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
-                    employeeDownloadOption.textContent = `${employee.FirstName} ${employee.LastName}`;
-                    employeeSelect.appendChild(employeeOption);
-                    employeeDownloadSelect.appendChild(employeeDownloadOption);
-                });
-
-                // Event listener voor werknemer selectie
-                employeeSelect.addEventListener('change', function() {
-                    const employeeId = employeeSelect.value;
-                    if (employeeId) {
-                        loadLoggedHours(employeeId, currentWeek);
-                    } else {
-                        document.getElementById('hours-logged').innerHTML = ''; // Leeg de lijst als geen werknemer is geselecteerd
-                    }
-                });
-            });
-        }
-
-        // Functie om geregistreerde uren op te halen
-        function loadLoggedHours(employeeId, weekOffset) {
-            const weekRange = getWeekRange(weekOffset);
-            const q = query(collection(db, 'hours'), where('userId', '==', employeeId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
-            getDocs(q).then(querySnapshot => {
-                const hoursLogged = document.getElementById('hours-logged');
-                hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-                querySnapshot.forEach(doc => {
-                    const hours = doc.data();
-                    const hoursItem = document.createElement('div');
-                    hoursItem.className = 'hours-item';
-                    hoursItem.innerHTML = `
-                        <span>${hours.day.toDate().toISOString().split('T')[0]}</span>
-                        <span>${hours.startTime}</span>
-                        <span>${hours.breakTime} min</span>
-                        <span>${hours.endTime}</span>
-                        <span>${hours.hoursWorked} uur</span>
-                        <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
-                    `;
-                    hoursLogged.appendChild(hoursItem);
-                });
-                // Voeg event listener toe na het toevoegen van items
-                document.querySelectorAll('.notes-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        showNotePopup(this.getAttribute('data-notes'));
-                    });
-                });
-            }).catch((error) => {
-                console.error('Fout bij het ophalen van de geregistreerde uren:', error);
-            });
-        }
-
-        // Functie om notitie pop-up te tonen
-        function showNotePopup(noteContent) {
-            const popup = document.getElementById('notes-popup');
-            popup.textContent = noteContent;
-            popup.classList.add('visible');
-        }
-
-        // Sluit notitie pop-up wanneer er buiten wordt geklikt
-        window.onclick = function(event) {
-            const popup = document.getElementById('notes-popup');
-            if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
-                popup.classList.remove('visible');
-            }
-        }
-
-        // Functie om naar de vorige week te gaan
-        function previousWeek() {
-            if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
-                currentWeek--;
-                loadLoggedHours(auth.currentUser.uid, currentWeek);
-            }
-        }
-
-        // Functie om naar de volgende week te gaan
-        function nextWeek() {
-            currentWeek++;
+    // Functie om naar de vorige week te gaan
+    function previousWeek() {
+        if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
+            currentWeek--;
             loadLoggedHours(auth.currentUser.uid, currentWeek);
         }
-        
-        // Voeg deze functies toe aan het window object zodat ze beschikbaar zijn in de globale scope
-        window.previousWeek = previousWeek;
-        window.nextWeek = nextWeek;
+    }
 
-        // Functie om de agenda te laden
-        function loadCalendar(customerId) {
-            const calendarEl = document.getElementById('calendar');
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                events: function(fetchInfo, successCallback, failureCallback) {
+    // Functie om naar de volgende week te gaan
+    function nextWeek() {
+        currentWeek++;
+        loadLoggedHours(auth.currentUser.uid, currentWeek);
+    }
+
+    // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
+    window.previousWeek = previousWeek;
+    window.nextWeek = nextWeek;
+
+    // Controleer of gebruiker is ingelogd
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            console.log('Gebruiker ingelogd:', user);
+            // Haal gegevens op voor de ingelogde klant
+            const userDocRef = doc(db, 'customers', user.uid);
+            getDoc(userDocRef).then(doc => {
+                if (doc.exists && doc.data().Role === 'Klant') {
+                    const data = doc.data();
+                    document.getElementById('customer-name').textContent = data['Customer Name'];
+                    document.getElementById('customer-email').textContent = user.email;
+                    loadProjects(user.uid);
+                    loadEmployees(user.uid);
+                    loadCalendar(user.uid);
+                } else {
+                    console.log('Geen gegevens gevonden voor deze gebruiker of gebruiker is geen klant.');
+                    alert('Ongeldige rol. Neem contact op met de beheerder.');
+                    auth.signOut().then(() => {
+                        window.location.href = 'klanten_login.html';
+                    });
+                }
+            });
+        } else {
+            console.log('Geen gebruiker ingelogd.');
+            window.location.href = 'klanten_login.html';
+        }
+    });
+
+    // Functie om projecten op te halen
+    function loadProjects(customerId) {
+        const q = query(collection(db, 'projects'), where('customerId', '==', customerId));
+        getDocs(q).then(querySnapshot => {
+            const projectList = document.getElementById('project-list');
+            projectList.innerHTML = ''; // Leeg de lijst voor nieuwe items
+            querySnapshot.forEach(doc => {
+                const project = doc.data();
+                const projectItem = document.createElement('div');
+                projectItem.textContent = `Project: ${project.title}`;
+                projectList.appendChild(projectItem);
+            });
+        });
+    }
+
+    // Functie om werknemers op te halen en keuzemenu te vullen
+    function loadEmployees(customerId) {
+        const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
+        getDocs(q).then(querySnapshot => {
+            const employeeSelect = document.getElementById('employee-select');
+            employeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
+            querySnapshot.forEach(doc => {
+                const employee = doc.data();
+                const employeeOption = document.createElement('option');
+                employeeOption.value = doc.id;
+                employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
+                employeeSelect.appendChild(employeeOption);
+            });
+
+            // Event listener voor werknemer selectie
+            employeeSelect.addEventListener('change', function() {
+                const employeeId = employeeSelect.value;
+                if (employeeId) {
+                    loadLoggedHours(employeeId, currentWeek);
+                } else {
+                    document.getElementById('hours-logged').innerHTML = ''; // Leeg de lijst als geen werknemer is geselecteerd
+                }
+            });
+        });
+    }
+
+    // Functie om geregistreerde uren op te halen
+    function loadLoggedHours(employeeId, weekOffset) {
+        const weekRange = getWeekRange(weekOffset);
+        const q = query(collection(db, 'hours'), where('userId', '==', employeeId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
+        getDocs(q).then(querySnapshot => {
+            const hoursLogged = document.getElementById('hours-logged');
+            hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
+            querySnapshot.forEach(doc => {
+                const hours = doc.data();
+                const hoursItem = document.createElement('div');
+                hoursItem.className = 'hours-item';
+                hoursItem.innerHTML = `
+                    <span>${hours.day.toDate().toISOString().split('T')[0]}</span>
+                    <span>${hours.startTime}</span>
+                    <span>${hours.breakTime} min</span>
+                    <span>${hours.endTime}</span>
+                    <span>${hours.hoursWorked} uur</span>
+                    <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
+                `;
+                hoursLogged.appendChild(hoursItem);
+            });
+            // Voeg event listener toe na het toevoegen van items
+            document.querySelectorAll('.notes-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    showNotePopup(this.getAttribute('data-notes'));
+                });
+            });
+        }).catch((error) => {
+            console.error('Fout bij het ophalen van de geregistreerde uren:', error);
+        });
+    }
+
+    // Functie om notitie pop-up te tonen
+    function showNotePopup(noteContent) {
+        const popup = document.getElementById('notes-popup');
+        popup.textContent = noteContent;
+        popup.classList.add('visible');
+    }
+
+    // Sluit notitie pop-up wanneer er buiten wordt geklikt
+    window.onclick = function(event) {
+        const popup = document.getElementById('notes-popup');
+        if (!event.target.matches('.notes-item') && !popup.contains(event.target)) {
+            popup.classList.remove('visible');
+        }
+    }
+
+    // Functie om de huidige week te berekenen
+    function getWeekRange(weekOffset) {
+        const now = new Date();
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1 + (weekOffset * 7))); // Start op maandag
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        return { start: startOfWeek, end: endOfWeek };
+    }
+
+    // Functie om de agenda te laden
+    function loadCalendar(customerId) {
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: function(fetchInfo, successCallback, failureCallback) {
                     const q = query(collection(db, 'events'), where('customerId', '==', customerId));
                     getDocs(q).then(querySnapshot => {
                         const events = [];
