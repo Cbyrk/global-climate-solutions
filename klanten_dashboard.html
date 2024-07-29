@@ -1,3 +1,31 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klant Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script type="module">
+    // Firebase configuratie
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
+    import { getFirestore, doc, getDoc, query, where, getDocs, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
+        authDomain: "register-employee-gcs.firebaseapp.com",
+        projectId: "register-employee-gcs",
+        storageBucket: "register-employee-gcs.appspot.com",
+        messagingSenderId: "823490257683",
+        appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
+        measurementId: "G-Q68YZMSFJX"
+    };
+        
     // Firebase initialiseren
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
