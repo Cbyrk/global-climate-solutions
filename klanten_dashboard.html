@@ -301,9 +301,9 @@
         e.preventDefault();
         const user = auth.currentUser;
         if (user) {
-            const employeeId = document.getElementById('download-employee-select').value;
-            const startDate = new Date(document.getElementById('download-start-day').value);
-            const endDate = new Date(document.getElementById('download-end-day').value);
+            const employeeId = document.getElementById('employee-download-select').value;
+            const startDate = new Date(document.getElementById('start-date').value);
+            const endDate = new Date(document.getElementById('end-date').value);
             const format = document.getElementById('download-format').value;
 
             const q = query(collection(db, 'hours'), where('userId', '==', employeeId), where('day', '>=', startDate), where('day', '<=', endDate));
