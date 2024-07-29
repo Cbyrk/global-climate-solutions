@@ -342,17 +342,39 @@
 
     // Functie om uren te downloaden als PDF
     function downloadAsPDF(hoursData) {
-        // Implementatie voor PDF download
+        const docDefinition = {
+            content: [
+                { text: 'Geregistreerde Uren', style: 'header' },
+                { table: { body: [['Datum', 'Begin Tijd', 'Pauze in Minuten', 'Eind Tijd', 'Totaal Uur', 'Notities'], ...hoursData.map(item => [item.Datum, item['Begin Tijd'], item['Pauze in Minuten'], item['Eind Tijd'], item['Totaal Uur'], item.Notities])] } }
+            ],
+            styles: {
+                header: {
+                    fontSize: 18,
+                    bold: true,
+                    margin: [0, 0, 0, 10]
+                }
+            }
+        };
+        pdfMake.createPdf(docDefinition).download('urenregistratie.pdf');
     }
 
     // Functie om uren te downloaden als Excel
     function downloadAsExcel(hoursData) {
-        // Implementatie voor Excel download
+        const worksheet = XLSX.utils.json_to_sheet(hoursData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Geregistreerde Uren');
+        XLSX.writeFile(workbook, 'urenregistratie.xlsx');
     }
 
     // Functie om uren te downloaden als Word
     function downloadAsWord(hoursData) {
-        // Implementatie voor Word download
+        const content = [
+            { text: 'Geregistreerde Uren\n\n', style: 'header' },
+            ...hoursData.map(item => `Datum: ${item.Datum}\nBegin Tijd: ${item['Begin Tijd']}\nPauze in Minuten: ${item['Pauze in Minuten']}\nEind Tijd: ${item['Eind Tijd']}\nTotaal Uur: ${item['Totaal Uur']}\nNotities: ${item.Notities}\n\n`)
+        ];
+
+        const blob = new Blob([content.join('')], { type: 'application/msword' });
+        saveAs(blob, 'urenregistratie.docx');
     }
     </script>
 
