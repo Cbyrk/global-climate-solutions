@@ -1,31 +1,3 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Klant Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/animations/scale.css">
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
-    <script src="https://unpkg.com/tippy.js@6"></script>
-    <script type="module">
-    // Firebase configuratie
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-    import { getFirestore, doc, getDoc, query, where, getDocs, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
-        authDomain: "register-employee-gcs.firebaseapp.com",
-        projectId: "register-employee-gcs",
-        storageBucket: "register-employee-gcs.appspot.com",
-        messagingSenderId: "823490257683",
-        appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
-        measurementId: "G-Q68YZMSFJX"
-    };
-
     // Firebase initialiseren
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -37,14 +9,20 @@
     function previousWeek() {
         if (currentWeek > -6) { // Limiteer tot maximaal 6 weken terug
             currentWeek--;
-            loadLoggedHours(auth.currentUser.uid, currentWeek);
+            const employeeId = document.getElementById('employee-select').value;
+            if (employeeId) {
+                loadLoggedHours(employeeId, currentWeek);
+            }
         }
     }
 
     // Functie om naar de volgende week te gaan
     function nextWeek() {
         currentWeek++;
-        loadLoggedHours(auth.currentUser.uid, currentWeek);
+        const employeeId = document.getElementById('employee-select').value;
+        if (employeeId) {
+            loadLoggedHours(employeeId, currentWeek);
+        }
     }
 
     // Zorg ervoor dat de functies voor vorige en volgende week beschikbaar zijn
@@ -64,6 +42,8 @@
                     document.getElementById('customer-email').textContent = user.email;
                     loadProjects(user.uid);
                     loadEmployees(user.uid);
+                    loadEmployeesForEvent(user.uid);
+                    loadEmployeesForDownload(user.uid);
                     loadCalendar(user.uid);
                 } else {
                     console.log('Geen gegevens gevonden voor deze gebruiker of gebruiker is geen klant.');
@@ -94,7 +74,7 @@
         });
     }
 
-    // Functie om werknemers op te halen en keuzemenu te vullen
+    // Functie om werknemers op te halen en keuzemenu te vullen voor geregistreerde uren
     function loadEmployees(customerId) {
         const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
         getDocs(q).then(querySnapshot => {
@@ -116,6 +96,38 @@
                 } else {
                     document.getElementById('hours-logged').innerHTML = ''; // Leeg de lijst als geen werknemer is geselecteerd
                 }
+            });
+        });
+    }
+
+    // Functie om werknemers op te halen en keuzemenu te vullen voor evenement toevoegen
+    function loadEmployeesForEvent(customerId) {
+        const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
+        getDocs(q).then(querySnapshot => {
+            const employeeSelect = document.getElementById('event-employee-select');
+            employeeSelect.innerHTML = '<option value="all">Alle werknemers</option>'; // Leeg de lijst voor nieuwe items
+            querySnapshot.forEach(doc => {
+                const employee = doc.data();
+                const employeeOption = document.createElement('option');
+                employeeOption.value = doc.id;
+                employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
+                employeeSelect.appendChild(employeeOption);
+            });
+        });
+    }
+
+    // Functie om werknemers op te halen en keuzemenu te vullen voor download geregistreerde uren
+    function loadEmployeesForDownload(customerId) {
+        const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
+        getDocs(q).then(querySnapshot => {
+            const employeeSelect = document.getElementById('download-employee-select');
+            employeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
+            querySnapshot.forEach(doc => {
+                const employee = doc.data();
+                const employeeOption = document.createElement('option');
+                employeeOption.value = doc.id;
+                employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
+                employeeSelect.appendChild(employeeOption);
             });
         });
     }
@@ -182,10 +194,15 @@
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             events: function(fetchInfo, successCallback, failureCallback) {
-                    const q = query(collection(db, 'events'), where('customerId', '==', customerId));
-                    getDocs(q).then(querySnapshot => {
+                const q1 = query(collection(db, 'events'), where('customerId', '==', customerId));
+                const q2 = query(collection(db, 'events'), where('assignedTo', '==', 'all'));
+                const q3 = query(collection(db, 'events'), where('type', '==', 'leave'));
+
+                Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)])
+                    .then(([customerEvents, allEvents, leaveEvents]) => {
                         const events = [];
-                        querySnapshot.forEach(doc => {
+
+                        customerEvents.forEach(doc => {
                             const data = doc.data();
                             events.push({
                                 title: data.title,
@@ -193,155 +210,110 @@
                                 end: data.end,
                                 backgroundColor: data.assignedTo === 'all' ? 'green' : 'pink',
                                 textColor: 'black',
-                                description: data.description,
-                            backgroundColor: data.assignedTo === 'all' ? 'green' :
-                                             data.assignedTo === 'mehmetCanBayrakId' ? 'pink' : 'lightblue',
-                            textColor: 'black'
+                                description: data.description
                             });
                         });
+
+                        allEvents.forEach(doc => {
+                            const data = doc.data();
+                            events.push({
+                                title: data.title,
+                                start: data.start,
+                                end: data.end,
+                                backgroundColor: 'green',
+                                textColor: 'black',
+                                description: data.description
+                            });
+                        });
+
+                        leaveEvents.forEach(doc => {
+                            const data = doc.data();
+                            events.push({
+                                title: 'Vrije dag',
+                                start: data.start,
+                                end: data.end,
+                                backgroundColor: 'blue',
+                                textColor: 'black',
+                                description: data.description
+                            });
+                        });
+
                         successCallback(events);
-                    }).catch(error => {
+                    })
+                    .catch(error => {
                         console.error('Fout bij het ophalen van events:', error);
                         failureCallback(error);
                     });
-                },
-                eventDidMount: function(info) {
-                    if (info.event.extendedProps.description) {
-                        tippy(info.el, {
-                            content: info.event.extendedProps.description,
-                        });
-                    }
+            },
+            eventDidMount: function(info) {
+                if (info.event.extendedProps.description) {
+                    tippy(info.el, {
+                        content: info.event.extendedProps.description,
+                    });
                 }
-            });
-            calendar.render();
-        }
-
-        // Functie om een nieuw evenement toe te voegen
-        document.getElementById('event-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const user = auth.currentUser;
-            if (user) {
-                const title = document.getElementById('event-title').value;
-                const startDay = document.getElementById('event-start-day').value;
-                const endDay = document.getElementById('event-end-day').value;
-                const startTime = document.getElementById('event-start-time').value || '00:00';
-                const endTime = document.getElementById('event-end-time').value || '23:59';
-                const description = document.getElementById('event-description').value;
-                const assignedTo = document.getElementById('event-assigned-to').value;
-
-                addDoc(collection(db, 'events'), {
-                    customerId: user.uid,
-                    title: title,
-                    start: `${startDay}T${startTime}:00`,
-                    end: `${endDay}T${endTime}:00`,
-                    description: description,
-                    assignedTo: assignedTo
-                })
-                .then(() => {
-                    console.log('Evenement succesvol toegevoegd');
-                    alert('Evenement succesvol toegevoegd');
-                    document.getElementById('event-form').reset();
-                    loadCalendar(user.uid); // Herlaad de agenda
-                })
-                .catch((error) => {
-                    console.error('Fout bij het toevoegen van evenement:', error);
-                    alert('Er is een fout opgetreden bij het toevoegen van evenement: ' + error.message);
-                });
-            } else {
-                alert('Je moet ingelogd zijn om een evenement toe te voegen.');
             }
         });
+        calendar.render();
+    }
 
-        // Functie om geregistreerde uren te downloaden
-        document.getElementById('download-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const employeeId = document.getElementById('employee-download-select').value;
-            const startDate = new Date(document.getElementById('start-date').value);
-            const endDate = new Date(document.getElementById('end-date').value);
+    // Functie om urenregistraties te downloaden
+    document.getElementById('download-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const user = auth.currentUser;
+        if (user) {
+            const employeeId = document.getElementById('download-employee-select').value;
+            const startDate = new Date(document.getElementById('download-start-day').value);
+            const endDate = new Date(document.getElementById('download-end-day').value);
             const format = document.getElementById('download-format').value;
-
-            if (!employeeId || !startDate || !endDate || !format) {
-                alert('Vul alle velden in.');
-                return;
-            }
 
             const q = query(collection(db, 'hours'), where('userId', '==', employeeId), where('day', '>=', startDate), where('day', '<=', endDate));
             getDocs(q).then(querySnapshot => {
                 const hoursData = [];
                 querySnapshot.forEach(doc => {
-                    hoursData.push(doc.data());
+                    const hours = doc.data();
+                    hoursData.push({
+                        Datum: hours.day.toDate().toISOString().split('T')[0],
+                        'Begin Tijd': hours.startTime,
+                        'Pauze in Minuten': hours.breakTime,
+                        'Eind Tijd': hours.endTime,
+                        'Totaal Uur': hours.hoursWorked,
+                        Notities: hours.notes || 'Geen notitie'
+                    });
                 });
 
-                if (format === 'pdf') {
-                    downloadPDF(hoursData);
-                } else if (format === 'excel') {
-                    downloadExcel(hoursData);
-                } else if (format === 'word') {
-                    downloadWord(hoursData);
-                }
-            }).catch(error => {
-                console.error('Fout bij het ophalen van de uren:', error);
-            });
-        });
-
-        function downloadPDF(hoursData) {
-            const docDefinition = {
-                content: [
-                    { text: 'Geregistreerde Uren', style: 'header' },
-                    table(hoursData)
-                ],
-                styles: {
-                    header: {
-                        fontSize: 18,
-                        bold: true,
-                        margin: [0, 0, 0, 10]
-                    },
-                    table: {
-                        margin: [0, 5, 0, 15]
+                if (hoursData.length > 0) {
+                    if (format === 'pdf') {
+                        downloadAsPDF(hoursData);
+                    } else if (format === 'excel') {
+                        downloadAsExcel(hoursData);
+                    } else if (format === 'word') {
+                        downloadAsWord(hoursData);
                     }
+                } else {
+                    alert('Geen uren gevonden in de opgegeven periode.');
                 }
-            };
-
-            pdfMake.createPdf(docDefinition).download('uren.pdf');
-        }
-
-        function downloadExcel(hoursData) {
-            const ws = XLSX.utils.json_to_sheet(hoursData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Uren');
-            XLSX.writeFile(wb, 'uren.xlsx');
-        }
-
-        function downloadWord(hoursData) {
-            const content = [
-                { text: 'Geregistreerde Uren', style: 'header' },
-                table(hoursData)
-            ];
-
-            const doc = new docx.Document({
-                sections: [{
-                    properties: {},
-                    children: content.map(item => new docx.Paragraph(item))
-                }]
+            }).catch((error) => {
+                console.error('Fout bij het ophalen van uren:', error);
             });
-
-            docx.Packer.toBlob(doc).then(blob => {
-                saveAs(blob, 'uren.docx');
-            });
+        } else {
+            alert('Je moet ingelogd zijn om uren te downloaden.');
         }
+    });
 
-        function table(data) {
-            return {
-                table: {
-                    headerRows: 1,
-                    widths: ['*', '*', '*', '*', '*'],
-                    body: [
-                        ['Datum', 'Begin Tijd', 'Eind Tijd', 'Pauze', 'Gewerkte Uren'],
-                        ...data.map(item => [item.day.toDate().toISOString().split('T')[0], item.startTime, item.endTime, `${item.breakTime} min`, `${item.hoursWorked} uur`])
-                    ]
-                }
-            };
-        }
+    // Functie om uren te downloaden als PDF
+    function downloadAsPDF(hoursData) {
+        // Implementatie voor PDF download
+    }
+
+    // Functie om uren te downloaden als Excel
+    function downloadAsExcel(hoursData) {
+        // Implementatie voor Excel download
+    }
+
+    // Functie om uren te downloaden als Word
+    function downloadAsWord(hoursData) {
+        // Implementatie voor Word download
+    }
     </script>
 
     <style>
