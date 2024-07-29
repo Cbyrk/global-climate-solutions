@@ -130,40 +130,48 @@
 
     // Functie om werknemers op te halen en keuzemenu te vullen voor evenement toevoegen
     function loadEmployeesForEvent(customerId) {
-        const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
-        getDocs(q).then(querySnapshot => {
-            const employeeSelect = document.getElementById('event-employee-select');
-            employeeSelect.innerHTML = '<option value="all">Alle werknemers</option>'; // Leeg de lijst voor nieuwe items
-            querySnapshot.forEach(doc => {
-                const employee = doc.data();
-                const employeeOption = document.createElement('option');
-                employeeOption.value = doc.id;
-                employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
-                employeeSelect.appendChild(employeeOption);
+        const employeeSelect = document.getElementById('event-employee-select');
+        if (employeeSelect) {
+            const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
+            getDocs(q).then(querySnapshot => {
+                employeeSelect.innerHTML = '<option value="all">Alle werknemers</option>'; // Leeg de lijst voor nieuwe items
+                querySnapshot.forEach(doc => {
+                    const employee = doc.data();
+                    const employeeOption = document.createElement('option');
+                    employeeOption.value = doc.id;
+                    employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
+                    employeeSelect.appendChild(employeeOption);
+                });
+            }).catch(error => {
+                console.error('Fout bij het ophalen van werknemers voor evenement:', error);
             });
-        }).catch(error => {
-            console.error('Fout bij het ophalen van werknemers voor evenement:', error);
-        });
+        } else {
+            console.error('Element "event-employee-select" niet gevonden');
+        }
     }
 
     // Functie om werknemers op te halen en keuzemenu te vullen voor download geregistreerde uren
     function loadEmployeesForDownload(customerId) {
-        const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
-        getDocs(q).then(querySnapshot => {
-            const employeeSelect = document.getElementById('download-employee-select');
-            employeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
-            querySnapshot.forEach(doc => {
-                const employee = doc.data();
-                const employeeOption = document.createElement('option');
-                employeeOption.value = doc.id;
-                employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
-                employeeSelect.appendChild(employeeOption);
+        const employeeSelect = document.getElementById('download-employee-select');
+        if (employeeSelect) {
+            const q = query(collection(db, 'employees'), where('customerId', '==', customerId));
+            getDocs(q).then(querySnapshot => {
+                employeeSelect.innerHTML = '<option value="">Selecteer een werknemer</option>'; // Leeg de lijst voor nieuwe items
+                querySnapshot.forEach(doc => {
+                    const employee = doc.data();
+                    const employeeOption = document.createElement('option');
+                    employeeOption.value = doc.id;
+                    employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
+                    employeeSelect.appendChild(employeeOption);
+                });
+            }).catch(error => {
+                console.error('Fout bij het ophalen van werknemers voor download:', error);
             });
-        }).catch(error => {
-            console.error('Fout bij het ophalen van werknemers voor download:', error);
-        });
+        } else {
+            console.error('Element "download-employee-select" niet gevonden');
+        }
     }
-
+        
     // Functie om geregistreerde uren op te halen
     function loadLoggedHours(employeeId, weekOffset) {
         const weekRange = getWeekRange(weekOffset);
