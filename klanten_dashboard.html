@@ -141,6 +141,8 @@
                 employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
                 employeeSelect.appendChild(employeeOption);
             });
+        }).catch(error => {
+            console.error('Fout bij het ophalen van werknemers voor evenement:', error);
         });
     }
 
@@ -157,6 +159,8 @@
                 employeeOption.textContent = `${employee.FirstName} ${employee.LastName}`;
                 employeeSelect.appendChild(employeeOption);
             });
+        }).catch(error => {
+            console.error('Fout bij het ophalen van werknemers voor download:', error);
         });
     }
 
