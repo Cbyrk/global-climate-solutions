@@ -307,35 +307,42 @@
     }
 
     // Functie om een evenement toe te voegen
-    document.getElementById('add-event-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const title = document.getElementById('event-title').value;
-        const description = document.getElementById('event-description').value;
-        const start = new Date(document.getElementById('event-start').value);
-        const end = new Date(document.getElementById('event-end').value);
-        const assignedTo = document.getElementById('event-assigned-to').value;
-        const user = auth.currentUser;
+    document.addEventListener('DOMContentLoaded', function() {
+        const addEventForm = document.getElementById('add-event-form');
+        if (addEventForm) {
+            addEventForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const title = document.getElementById('event-title').value;
+                const description = document.getElementById('event-description').value;
+                const start = new Date(document.getElementById('event-start').value);
+                const end = new Date(document.getElementById('event-end').value);
+                const assignedTo = document.getElementById('event-assigned-to').value;
+                const user = auth.currentUser;
 
-        if (user) {
-            const customerId = user.uid;
-            addDoc(collection(db, 'events'), {
-                title: title,
-                description: description,
-                start: start,
-                end: end,
-                assignedTo: assignedTo,
-                customerId: customerId,
-                type: 'event' // Specificeer het type als evenement
-            }).then(() => {
-                alert('Evenement succesvol toegevoegd.');
-                document.getElementById('add-event-form').reset();
-                loadCalendar(customerId);
-            }).catch((error) => {
-                console.error('Fout bij het toevoegen van evenement:', error);
-                alert('Fout bij het toevoegen van evenement. Probeer het opnieuw.');
+                if (user) {
+                    const customerId = user.uid;
+                    addDoc(collection(db, 'events'), {
+                        title: title,
+                        description: description,
+                        start: start,
+                        end: end,
+                        assignedTo: assignedTo,
+                        customerId: customerId,
+                        type: 'event' // Specificeer het type als evenement
+                    }).then(() => {
+                        alert('Evenement succesvol toegevoegd.');
+                        addEventForm.reset();
+                        loadCalendar(customerId);
+                    }).catch((error) => {
+                        console.error('Fout bij het toevoegen van evenement:', error);
+                        alert('Fout bij het toevoegen van evenement. Probeer het opnieuw.');
+                    });
+                } else {
+                    alert('Je moet ingelogd zijn om een evenement toe te voegen.');
+                }
             });
         } else {
-            alert('Je moet ingelogd zijn om een evenement toe te voegen.');
+            console.error('Element "add-event-form" niet gevonden');
         }
     });
 
