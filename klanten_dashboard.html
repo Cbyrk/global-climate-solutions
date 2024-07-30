@@ -365,9 +365,14 @@
                 {
                     table: {
                         headerRows: 1,
-                        widths: ['*', '*', '*', '*', '*', '*'],
+                        widths: ['auto', 'auto', 'auto', 'auto', 'auto', '*'],
                         body: [
-                            ['Datum', 'Begin Tijd', 'Pauze in Minuten', 'Eind Tijd', 'Totaal Uur', 'Notities'],
+                            [{ text: 'Datum', style: 'tableHeader' },
+                             { text: 'Begin\nTijd', style: 'tableHeader' },
+                             { text: 'Pauze in\nMinuten', style: 'tableHeader' },
+                             { text: 'Eind\nTijd', style: 'tableHeader' },
+                             { text: 'Totaal\nUur', style: 'tableHeader' },
+                             { text: 'Notities', style: 'tableHeader' }],
                             ...hoursData.map(item => [
                                 item.Datum,
                                 item['Begin Tijd'],
@@ -390,12 +395,16 @@
                     fontSize: 14,
                     bold: true,
                     margin: [0, 10, 0, 10]
+                },
+                tableHeader: {
+                    bold: true,
+                    fontSize: 12,
+                    alignment: 'center'
                 }
             }
         };
         pdfMake.createPdf(docDefinition).download('urenregistratie.pdf');
     }
-
     // Functie om uren te downloaden als Excel
     function downloadAsExcel(hoursData) {
         const worksheet = XLSX.utils.json_to_sheet(hoursData);
