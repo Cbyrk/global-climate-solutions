@@ -380,6 +380,14 @@
         const blob = new Blob([content.join('')], { type: 'application/msword' });
         saveAs(blob, 'urenregistratie.docx');
     }
+
+    // Voeg hier de Base64-afbeelding toe
+    document.addEventListener('DOMContentLoaded', function() {
+        const imageElement = document.createElement('img');
+        imageElement.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAADMRuQuAAAAM1BMVEX///8AAADf3989PT3Z2dn8/Pz5+fnl5eXz8/Obm5vv7+/h4eHk5OTg4OD29vby8vLp6enAwMCfn5/V1dXb29sZKymeAAAKQklEQVR4nO2dC1ObMAyFgaYUFf//N0HjRQFXnW7rYvRz5dN2eMzDJkoKMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPy2bCv4V7uXa7s+d1ve5/pp+tbz3QbrvwcbmcOaVcOt/yaOvzHR9sfNiqqtUeW8u1gysNTzUqbrzJKbDJaxMaDeP/bBeNruMYtPKJdxN4rSPwMEnU5b0lGd8LVfc5VHXcHeD6XyReT6aStOtO7fb8kx4ls24Hp6C6
+        imageElement.alt = 'Base64 Afbeelding';
+        document.body.appendChild(imageElement);
+    });    
     </script>
 
     <style>
@@ -590,5 +598,13 @@
     </div>
 
     <div id="notes-popup" class="notes-popup"></div>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            const imageElement = document.createElement('img');
+            imageElement.src = 'data:image/png;base64,...'; // Voeg hier de base64-string van de afbeelding in
+            imageElement.alt = 'Base64 Afbeelding';
+            document.body.appendChild(imageElement);
+        });
+    </script>
 </body>
 </html>
