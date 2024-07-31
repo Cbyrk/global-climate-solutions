@@ -177,8 +177,6 @@
     }
         
     // Functie om geregistreerde uren op te halen
-    function loadLoggedHours(employeeId) {
-        const q = query(collection(db, 'hours'), where('userId', '==', employeeId));
     function loadLoggedHours(employeeId, weekOffset) {
         const weekRange = getWeekRange(weekOffset);
         const q = query(collection(db, 'hours'), where('userId', '==', employeeId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
@@ -240,56 +238,25 @@
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             events: function(fetchInfo, successCallback, failureCallback) {
-                const q1 = query(collection(db, 'events'), where('customerId', '==', customerId));
-                const q2 = query(collection(db, 'events'), where('assignedTo', '==', 'all'));
-                const q3 = query(collection(db, 'events'), where('type', '==', 'leave'));
-
-                Promise.all([getDocs(q1), getDocs(q2), getDocs(q3)])
-                    .then(([customerEvents, allEvents, leaveEvents]) => {
-                        const events = [];
-
-                        customerEvents.forEach(doc => {
-                            const data = doc.data();
-                            events.push({
-                                title: data.title,
-                                start: data.start,
-                                end: data.end,
-                                backgroundColor: data.assignedTo === 'all' ? 'green' : 'pink',
-                                textColor: 'black',
-                                description: data.description
-                            });
+                const q = query(collection(db, 'events'), where('customerId', '==', customerId));
+                getDocs(q).then(querySnapshot => {
+                    const events = [];
+                    querySnapshot.forEach(doc => {
+                        const data = doc.data();
+                        events.push({
+                            title: data.title,
+                            start: data.start.toDate(),
+                            end: data.end.toDate(),
+                            backgroundColor: data.assignedTo === 'all' ? 'green' : 'pink',
+                            textColor: 'black',
+                            description: data.description
                         });
-
-                        allEvents.forEach(doc => {
-                            const data = doc.data();
-                            events.push({
-                                title: data.title,
-                                start: data.start,
-                                end: data.end,
-                                backgroundColor: 'green',
-                                textColor: 'black',
-                                description: data.description
-                            });
-                        });
-
-                        leaveEvents.forEach(doc => {
-                            const data = doc.data();
-                            events.push({
-                                title: 'Vrije dag',
-                                start: data.start,
-                                end: data.end,
-                                backgroundColor: 'blue',
-                                textColor: 'black',
-                                description: data.description
-                            });
-                        });
-
-                        successCallback(events);
-                    })
-                    .catch(error => {
-                        console.error('Fout bij het ophalen van events:', error);
-                        failureCallback(error);
                     });
+                    successCallback(events);
+                }).catch(error => {
+                    console.error('Fout bij het ophalen van events:', error);
+                    failureCallback(error);
+                });
             },
             eventDidMount: function(info) {
                 if (info.event.extendedProps.description) {
