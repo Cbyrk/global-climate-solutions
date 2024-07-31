@@ -177,38 +177,34 @@
     }
         
     // Functie om geregistreerde uren op te halen
+    function loadLoggedHours(employeeId) {
+        const q = query(collection(db, 'hours'), where('userId', '==', employeeId));
     function loadLoggedHours(employeeId, weekOffset) {
         const weekRange = getWeekRange(weekOffset);
-        console.log('Week range:', weekRange); // Debug log
         const q = query(collection(db, 'hours'), where('userId', '==', employeeId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
         getDocs(q).then(querySnapshot => {
             const hoursLogged = document.getElementById('hours-logged');
             hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
-            if (querySnapshot.empty) {
-                console.log('Geen geregistreerde uren gevonden voor deze periode.');
-            } else {
-                querySnapshot.forEach(doc => {
-                    const hours = doc.data();
-                    console.log('Geregistreerde uren:', hours); // Debug log
-                    const hoursItem = document.createElement('div');
-                    hoursItem.className = 'hours-item';
-                    hoursItem.innerHTML = `
-                        <span>${hours.day.toDate().toISOString().split('T')[0]}</span>
-                        <span>${hours.startTime}</span>
-                        <span>${hours.breakTime} min</span>
-                        <span>${hours.endTime}</span>
-                        <span>${hours.hoursWorked} uur</span>
-                        <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
-                    `;
-                    hoursLogged.appendChild(hoursItem);
+            querySnapshot.forEach(doc => {
+                const hours = doc.data();
+                const hoursItem = document.createElement('div');
+                hoursItem.className = 'hours-item';
+                hoursItem.innerHTML = `
+                    <span>${hours.day.toDate().toISOString().split('T')[0]}</span>
+                    <span>${hours.startTime}</span>
+                    <span>${hours.breakTime} min</span>
+                    <span>${hours.endTime}</span>
+                    <span>${hours.hoursWorked} uur</span>
+                    <span class="notes-item" data-notes="${hours.notes ? hours.notes : 'Geen notitie'}">${hours.notes ? 'Notitie weergeven' : 'Geen notitie'}</span>
+                `;
+                hoursLogged.appendChild(hoursItem);
+            });
+            // Voeg event listener toe na het toevoegen van items
+            document.querySelectorAll('.notes-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    showNotePopup(this.getAttribute('data-notes'));
                 });
-                // Voeg event listener toe na het toevoegen van items
-                document.querySelectorAll('.notes-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        showNotePopup(this.getAttribute('data-notes'));
-                    });
-                });
-            }
+            });
         }).catch((error) => {
             console.error('Fout bij het ophalen van de geregistreerde uren:', error);
         });
