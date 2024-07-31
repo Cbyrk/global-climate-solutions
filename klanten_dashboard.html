@@ -179,12 +179,14 @@
     // Functie om geregistreerde uren op te halen
     function loadLoggedHours(employeeId, weekOffset) {
         const weekRange = getWeekRange(weekOffset);
+        console.log('Ophalen geregistreerde uren voor werknemer:', employeeId, 'van week:', weekRange);
         const q = query(collection(db, 'hours'), where('userId', '==', employeeId), where('day', '>=', weekRange.start), where('day', '<=', weekRange.end));
         getDocs(q).then(querySnapshot => {
             const hoursLogged = document.getElementById('hours-logged');
             hoursLogged.innerHTML = ''; // Leegmaken van de huidige inhoud
             querySnapshot.forEach(doc => {
                 const hours = doc.data();
+                console.log('Geregistreerde uren data:', hours);
                 const hoursItem = document.createElement('div');
                 hoursItem.className = 'hours-item';
                 hoursItem.innerHTML = `
