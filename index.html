@@ -40,17 +40,20 @@
             });
 
             const mobileKeyboardButton = document.getElementById('mobile-keyboard-button');
+            const hiddenInput = document.getElementById('hidden-input');
+
             if (mobileKeyboardButton) {
                 mobileKeyboardButton.addEventListener('click', () => {
-                    let keysPressedMobile = [];
-                    document.addEventListener('keydown', (event) => {
-                        keysPressedMobile.push(event.key.toLowerCase());
-                        keysPressedMobile = keysPressedMobile.slice(-secretCode.length);
+                    hiddenInput.focus();
+                });
 
-                        if (keysPressedMobile.join('') === secretCode.join('')) {
-                            window.location.href = 'werknemers_login.html';
-                        }
-                    });
+                hiddenInput.addEventListener('input', (event) => {
+                    keysPressed.push(event.data.toLowerCase());
+                    keysPressed = keysPressed.slice(-secretCode.length);
+
+                    if (keysPressed.join('') === secretCode.join('')) {
+                        window.location.href = 'werknemers_login.html';
+                    }
                 });
             }
         });
@@ -81,7 +84,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: url('xyhy2w8l.png') no-repeat center center;
+            background;
             background-size: cover;
             position: relative;
             text-align: center;
@@ -121,6 +124,13 @@
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
+
+        /* Verborgen invoerveld om het mobiele toetsenbord te activeren */
+        #hidden-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -141,6 +151,9 @@
     <footer>
         <p>&copy; 2024 Global Climate Solutions. Alle rechten voorbehouden.</p>
     </footer>
+
+    <!-- Verborgen invoerveld om het mobiele toetsenbord te activeren -->
+    <input type="text" id="hidden-input">
 
     <!-- Floating Keyboard Button for Mobile -->
     <button id="mobile-keyboard-button" class="floating-button">⌨️</button>
