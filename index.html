@@ -55,63 +55,6 @@
             }
         });
     </script>
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Climate Solutions</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-    <script>
-        // Firebase configuratie
-        const firebaseConfig = {
-            apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
-            authDomain: "register-employee-gcs.firebaseapp.com",
-            projectId: "register-employee-gcs",
-            storageBucket: "register-employee-gcs.appspot.com",
-            messagingSenderId: "823490257683",
-            appId: "1:823490257683:web:aaa4aa6897ad0bbca470e6",
-            measurementId: "G-Q68YZMSFJX"
-        };
-
-        // Firebase initialiseren
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            let keysPressed = [];
-            const secretCode = ['g', 'c', 's'];
-
-            document.addEventListener('keydown', (event) => {
-                keysPressed.push(event.key.toLowerCase());
-                keysPressed = keysPressed.slice(-secretCode.length);
-
-                if (keysPressed.join('') === secretCode.join('')) {
-                    window.location.href = 'werknemers_login.html';
-                }
-            });
-
-            const mobileKeyboardButton = document.getElementById('mobile-keyboard-button');
-            if (mobileKeyboardButton) {
-                mobileKeyboardButton.addEventListener('click', () => {
-                    let keysPressedMobile = [];
-                    document.addEventListener('keydown', (event) => {
-                        keysPressedMobile.push(event.key.toLowerCase());
-                        keysPressedMobile = keysPressedMobile.slice(-secretCode.length);
-
-                        if (keysPressedMobile.join('') === secretCode.join('')) {
-                            window.location.href = 'werknemers_login.html';
-                        }
-                    });
-                });
-            }
-        });
-    </script>
     <style>
         body, html {
             margin: 0;
