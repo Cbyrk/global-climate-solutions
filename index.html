@@ -30,13 +30,19 @@
             let keysPressed = [];
             const secretCode = ['g', 'c', 's'];
 
+            // Functie om geheime code te controleren
+            function checkSecretCode() {
+                if (keysPressed.join('').includes(secretCode.join(''))) {
+                    window.location.href = 'werknemers_login.html';
+                }
+            }
+
             document.addEventListener('keydown', (event) => {
                 keysPressed.push(event.key.toLowerCase());
                 keysPressed = keysPressed.slice(-secretCode.length);
 
-                if (keysPressed.join('') === secretCode.join('')) {
-                    window.location.href = 'werknemers_login.html';
-                }
+                console.log('Input event:', event.key.toLowerCase());
+                checkSecretCode();
             });
 
             const mobileKeyboardButton = document.getElementById('mobile-keyboard-button');
@@ -49,14 +55,12 @@
 
                 hiddenInput.addEventListener('input', (event) => {
                     const value = event.target.value.toLowerCase();
-                    console.log('Input event:', value);  // Log de invoerwaarde
                     keysPressed.push(value);
                     keysPressed = keysPressed.slice(-secretCode.length);
 
-                    if (keysPressed.join('').includes(secretCode.join(''))) {
-                        window.location.href = 'werknemers_login.html';
-                    }
-                    // Reset the input field to keep it hidden
+                    console.log('Input event:', value);
+                    checkSecretCode();
+                    // Reset het invoerveld om het verborgen te houden
                     hiddenInput.value = '';
                 });
             }
