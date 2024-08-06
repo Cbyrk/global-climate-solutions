@@ -9,6 +9,10 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
     <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.70/vfs_fonts.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script type="module">
         // Firebase configuratie
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
@@ -296,6 +300,142 @@
                 alert('Je moet ingelogd zijn om een vrije dag aan te vragen.');
             }
         });
+
+        // Functie om urenregistraties te downloaden
+        document.getElementById('download-hours-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (user) {
+                const startDate = new Date(document.getElementById('download-start-date').value);
+                const endDate = new Date(document.getElementById('download-end-date').value);
+                const format = document.getElementById('download-format').value;
+
+                const q = query(collection(db, 'hours'), where('userId', '==', user.uid), where('day', '>=', startDate), where('day', '<=', endDate));
+                getDocs(q).then(querySnapshot => {
+                    const hoursData = [];
+                    querySnapshot.forEach(doc => {
+                        const hours = doc.data();
+                        hoursData.push({
+                            Datum: hours.day.toDate().toISOString().split('T')[0],
+                            'Begin Tijd': hours.startTime,
+                            'Pauze in Minuten': hours.breakTime,
+                            'Eind Tijd': hours.endTime,
+                            'Totaal Uur': hours.hoursWorked,
+                            Notities: hours.notes || 'Geen notitie'
+                        });
+                    });
+
+                    if (hoursData.length > 0) {
+                        if (format === 'pdf') {
+                            downloadAsPDF(hoursData);
+                        } else if (format === 'excel') {
+                            downloadAsExcel(hoursData);
+                        } else if (format === 'word') {
+                            downloadAsWord(hoursData);
+                        }
+                    } else {
+                        alert('Geen uren gevonden in de opgegeven periode.');
+                    }
+                }).catch((error) => {
+                    console.error('Fout bij het ophalen van uren:', error);
+                });
+            } else {
+                alert('Je moet ingelogd zijn om uren te downloaden.');
+            }
+        });
+
+        // Functie om uren te downloaden als PDF
+        function downloadAsPDF(hoursData) {
+            const docDefinition = {
+                content: [
+                    { text: 'Geregistreerde Uren', style: 'header' },
+                    {
+                        table: {
+                            headerRows: 1,
+                            widths: ['auto', '10%', '10%', '10%', '10%', '*'],
+                            body: [
+                                [{ text: 'Datum', style: 'tableHeader' },
+                                { text: 'Begin Tijd', style: 'tableHeader' },
+                                { text: 'Pauze in Minuten', style: 'tableHeader' },
+                                { text: 'Eind Tijd', style: 'tableHeader' },
+                                { text: 'Totaal Uur', style: 'tableHeader' },
+                                { text: 'Notities', style: 'tableHeader' }],
+                                ...hoursData.map(item => [
+                                    item.Datum,
+                                    item['Begin Tijd'],
+                                    item['Pauze in Minuten'],
+                                    item['Eind Tijd'],
+                                    item['Totaal Uur'],
+                                    item.Notities
+                                ])
+                            ]
+                        }
+                    }
+                ],
+                styles: {
+                    header: {
+                        fontSize: 18,
+                        bold: true,
+                        margin: [0, 10, 0, 10]
+                    },
+                    tableHeader: {
+                        bold: true,
+                        fontSize: 12,
+                        alignment: 'center'
+                    }
+                }
+            };
+            pdfMake.createPdf(docDefinition).download('urenregistratie_GCS.pdf');
+        }
+
+        // Functie om uren te downloaden als Excel
+        function downloadAsExcel(hoursData) {
+            const worksheet = XLSX.utils.json_to_sheet(hoursData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Geregistreerde Uren');
+            XLSX.writeFile(workbook, 'urenregistratie.xlsx');
+        }
+
+        // Functie om uren te downloaden als Word
+        function downloadAsWord(hoursData) {
+            const content = [
+                { text: 'Geregistreerde Uren', style: 'header' },
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: ['auto', '10%', '10%', '10%', '10%', '*'],
+                        body: [
+                            [{ text: 'Datum', style: 'tableHeader' },
+                            { text: 'Begin Tijd', style: 'tableHeader' },
+                            { text: 'Pauze in Minuten', style: 'tableHeader' },
+                            { text: 'Eind Tijd', style: 'tableHeader' },
+                            { text: 'Totaal Uur', style: 'tableHeader' },
+                            { text: 'Notities', style: 'tableHeader' }],
+                            ...hoursData.map(item => [
+                                item.Datum,
+                                item['Begin Tijd'],
+                                item['Pauze in Minuten'],
+                                item['Eind Tijd'],
+                                item['Totaal Uur'],
+                                item.Notities
+                            ])
+                        ]
+                    }
+                }
+            ];
+            const doc = new window.docx.Document();
+            const table = new window.docx.Table({
+                rows: content.map(row => new window.docx.TableRow({
+                    children: row.map(cell => new window.docx.TableCell({
+                        children: [new window.docx.Paragraph(cell.text)],
+                    })),
+                })),
+            });
+            doc.addSection({ children: [table] });
+            window.docx.Packer.toBlob(doc).then(blob => {
+                window.saveAs(blob, 'urenregistratie.docx');
+            });
+        }
     </script>
     
     <style>
@@ -490,6 +630,35 @@
     </div>
 
     <div id="notes-popup" class="notes-popup"></div>
+
+    <div class="dashboard-box" id="download-box">
+        <h2>Download Geregistreerde Uren</h2>
+        <form id="download-form">
+            <div>
+                <label for="employee-download-select">Werknemer:</label>
+                <select id="employee-download-select" required>
+                    <option value="">Selecteer een werknemer</option>
+                </select>
+            </div>
+            <div>
+                <label for="start-date">Vanaf datum:</label>
+                <input type="date" id="start-date" required>
+            </div>
+            <div>
+                <label for="end-date">Tot datum:</label>
+                <input type="date" id="end-date" required>
+            </div>
+            <div>
+                <label for="download-format">Formaat:</label>
+                <select id="download-format" required>
+                    <option value="pdf">PDF</option>
+                    <option value="excel">Excel</option>
+                    <option value="word">Word</option>
+                </select>
+            </div>
+            <button type="submit">Download</button>
+        </form>
+    </div>
     
 </body>
 </html>
