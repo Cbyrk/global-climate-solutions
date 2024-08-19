@@ -85,6 +85,11 @@
                 const endTime = document.getElementById('end-time').value;
                 const breakTime = document.getElementById('break-time').value;
                 const notes = document.getElementById('notes').value; // Notities veld toevoegen
+                
+                // Convert breakTime to "HH:MM" format
+                const breakHours = Math.floor(breakTime / 60);
+                const breakMinutes = breakTime % 60;
+                const breakTimeString = `${breakHours.toString().padStart(2, '0')}:${breakMinutes.toString().padStart(2, '0')}`;          
                 const hoursWorked = calculateHours(startTime, endTime, breakTime);
 
                 addDoc(collection(db, 'hours'), {
@@ -92,7 +97,7 @@
                     day: new Date(day),
                     startTime: startTime,
                     endTime: endTime,
-                    breakTime: breakTime,
+                    breakTime: breakTimeString, // Save as string in "HH:MM" format
                     hoursWorked: hoursWorked,
                     notes: notes // Notities opslaan in Firestore
                 })
@@ -116,8 +121,12 @@
             const start = new Date(`1970-01-01T${startTime}Z`);
             const end = new Date(`1970-01-01T${endTime}Z`);
             const diff = (end - start) / (1000 * 60 * 60); // verschil in uren
-            const breakHours = breakTime / 60; // pauzetijd in uren
-            return diff - breakHours;
+
+            // Convert breakTime (in "HH:MM" format) to hours
+            const [breakHours, breakMinutes] = breakTime.split(':').map(Number);
+            const breakTimeInHours = breakHours + (breakMinutes / 60);
+
+            return diff - breakTimeInHours;
         }
 
         // Functie om de huidige week te berekenen
