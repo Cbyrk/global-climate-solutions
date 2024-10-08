@@ -52,14 +52,24 @@
         // Functie om werknemers op te halen
         function loadEmployees() {
             getDocs(collection(db, 'employees')).then(querySnapshot => {
-                const employeeSelect = document.getElementById('employee-select');
+                const employeeSelectAssign = document.getElementById('employee-select');
+                const employeeSelectSchedule = document.getElementById('schedule-employee-select'); // Rooster formulier
                 const employeeLegend = document.getElementById('employee-legend');
+        
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = `${data.FirstName} ${data.LastName}`;
-                    employeeSelect.appendChild(option);
+                    const optionAssign = document.createElement('option');
+                    const optionSchedule = document.createElement('option');
+
+                    // Voeg opties toe voor het toewijzen van werknemer aan klant
+                    optionAssign.value = doc.id;
+                    optionAssign.textContent = `${data.FirstName} ${data.LastName}`;
+                    employeeSelectAssign.appendChild(optionAssign);
+
+                    // Voeg opties toe voor het plannen van het rooster
+                    optionSchedule.value = doc.id;
+                    optionSchedule.textContent = `${data.FirstName} ${data.LastName}`;
+                    employeeSelectSchedule.appendChild(optionSchedule);
 
                     // Voeg werknemer toe aan de legende
                     const color = getColor(doc.id);
@@ -69,6 +79,7 @@
                 });
             });
         }
+
 
         // Functie om klanten op te halen
         function loadCustomers() {
