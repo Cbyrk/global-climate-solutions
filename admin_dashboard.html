@@ -11,7 +11,7 @@
         // Voeg Firebase imports toe
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc, addDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc, addDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
@@ -51,13 +51,25 @@
 
         // Functie om werknemers op te halen
         function loadEmployees() {
+            console.log("Laad werknemers...");
+
+            const employeeSelectAssign = document.getElementById('employee-select');
+            const employeeSelectSchedule = document.getElementById('schedule-employee-select'); // Voor planning rooster
+
+            if (!employeeSelectAssign || !employeeSelectSchedule) {
+                console.error("Een of beide select elementen zijn niet gevonden!");
+                return;
+            }
+
             getDocs(collection(db, 'employees')).then(querySnapshot => {
-                const employeeSelectAssign = document.getElementById('employee-select');
-                const employeeSelectSchedule = document.getElementById('schedule-employee-select'); // Rooster formulier
+                console.log("Werknemers ontvangen:", querySnapshot);
+
                 const employeeLegend = document.getElementById('employee-legend');
-        
+
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
+                    console.log("Werknemer data:", data);
+
                     const optionAssign = document.createElement('option');
                     const optionSchedule = document.createElement('option');
 
@@ -77,9 +89,10 @@
                     legendItem.innerHTML = `<span style="background-color: ${color}; width: 10px; height: 10px; display: inline-block; margin-right: 5px;"></span>${data.FirstName}`;
                     employeeLegend.appendChild(legendItem);
                 });
+            }).catch((error) => {
+                console.error("Fout bij het ophalen van werknemers:", error);
             });
         }
-
 
         // Functie om klanten op te halen
         function loadCustomers() {
@@ -113,29 +126,27 @@
             });
         });
 
-        // Functie om werkroosters toe te voegen
-        document.getElementById('schedule-form').addEventListener('submit', async function(e) {
+        // Functie om werkrooster toe te voegen
+        document.getElementById('schedule-form').addEventListener('submit', function(e) {
             e.preventDefault();
-
-            const employeeId = document.getElementById('employee-select').value;
+            const employeeId = document.getElementById('schedule-employee-select').value;
             const startTime = document.getElementById('start-time').value;
             const endTime = document.getElementById('end-time').value;
 
-            // Maak document ID gebaseerd op employeeId + startdatum
-            const workScheduleId = `${employeeId}_${startTime.split('T')[0]}`;
+            const newSchedule = {
+                employeeId: employeeId,
+                start: new Date(startTime).toISOString(),
+                end: new Date(endTime).toISOString(),
+                type: 'workSchedule'
+            };
 
-            try {
-                await setDoc(doc(db, 'workSchedules', workScheduleId), {
-                    employeeId: employeeId,
-                    startTime: startTime,
-                    endTime: endTime
-                });
-                alert('Werkrooster succesvol toegevoegd!');
+            addDoc(collection(db, 'workSchedules'), newSchedule).then(() => {
+                alert('Werkrooster succesvol toegevoegd');
                 document.getElementById('schedule-form').reset();
-            } catch (error) {
+            }).catch((error) => {
                 console.error('Fout bij het toevoegen van werkrooster:', error);
-                alert('Er is een fout opgetreden bij het toevoegen van het werkrooster: ' + error.message);
-            }
+                alert('Er is een fout opgetreden bij het toevoegen: ' + error.message);
+            });
         });
 
         // Functie om kleuren toe te wijzen aan werknemers
@@ -153,21 +164,21 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    getDocs(collection(db, 'workSchedules')).then(querySnapshot => {
+                    getDocs(collection(db, 'events')).then(querySnapshot => {
                         const events = [];
                         querySnapshot.forEach(doc => {
                             const data = doc.data();
                             events.push({
-                                title: `Werkrooster: ${data.employeeId}`,
-                                start: data.startTime,
-                                end: data.endTime,
+                                title: data.title,
+                                start: data.start,
+                                end: data.end,
                                 backgroundColor: getColor(data.employeeId),
                                 borderColor: getColor(data.employeeId)
                             });
                         });
                         successCallback(events);
                     }).catch(error => {
-                        console.error('Fout bij het ophalen van werkroosters:', error);
+                        console.error('Fout bij het ophalen van events:', error);
                         failureCallback(error);
                     });
                 }
@@ -186,7 +197,7 @@
             font-family: Arial, sans-serif;
             color: white;
         }
-        .assign-container, .calendar-container, .schedule-container {
+        .assign-container, .schedule-container, .calendar-container {
             background-color: #333;
             padding: 20px;
             border-radius: 10px;
@@ -194,24 +205,24 @@
             margin: 10px;
             width: 80%;
         }
-        .assign-container h1, .calendar-container h1, .schedule-container h1 {
+        .assign-container h1, .schedule-container h1, .calendar-container h1 {
             color: white;
             margin-bottom: 20px;
         }
-        .assign-container label, .calendar-container label, .schedule-container label {
+        .assign-container label, .schedule-container label, .calendar-container label {
             color: white;
             display: block;
             text-align: left;
             margin-bottom: 5px;
         }
-        .assign-container select, .schedule-container select, .assign-container button, .schedule-container button, .schedule-container input {
+        .assign-container select, .schedule-container select, .assign-container button, .schedule-container button {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
             border: none;
             border-radius: 5px;
         }
-        .assign-container select, .schedule-container select, .schedule-container input {
+        .assign-container select, .schedule-container select {
             background-color: #3a3a3a;
             color: white;
         }
@@ -247,12 +258,12 @@
     <div class="schedule-container">
         <h1>Plan een Werkrooster</h1>
         <form id="schedule-form">
-            <label for="employee-select">Selecteer Werknemer:</label>
-            <select id="employee-select" required></select>
+            <label for="schedule-employee-select">Selecteer Werknemer:</label>
+            <select id="schedule-employee-select" required></select>
             <label for="start-time">Starttijd:</label>
-            <input type="datetime-local" id="start-time" required>
+            <input type="datetime-local" id="start-time" required />
             <label for="end-time">Eindtijd:</label>
-            <input type="datetime-local" id="end-time" required>
+            <input type="datetime-local" id="end-time" required />
             <button type="submit">Rooster toevoegen</button>
         </form>
     </div>
@@ -264,4 +275,3 @@
     </div>
 </body>
 </html>
-
