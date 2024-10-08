@@ -11,7 +11,7 @@
         // Voeg Firebase imports toe
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc, addDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
@@ -102,6 +102,31 @@
             });
         });
 
+        // Functie om werkroosters toe te voegen
+        document.getElementById('schedule-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const employeeId = document.getElementById('employee-select').value;
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+
+            // Maak document ID gebaseerd op employeeId + startdatum
+            const workScheduleId = `${employeeId}_${startTime.split('T')[0]}`;
+
+            try {
+                await setDoc(doc(db, 'workSchedules', workScheduleId), {
+                    employeeId: employeeId,
+                    startTime: startTime,
+                    endTime: endTime
+                });
+                alert('Werkrooster succesvol toegevoegd!');
+                document.getElementById('schedule-form').reset();
+            } catch (error) {
+                console.error('Fout bij het toevoegen van werkrooster:', error);
+                alert('Er is een fout opgetreden bij het toevoegen van het werkrooster: ' + error.message);
+            }
+        });
+
         // Functie om kleuren toe te wijzen aan werknemers
         function getColor(employeeId) {
             const colors = [
@@ -117,21 +142,21 @@
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    getDocs(collection(db, 'events')).then(querySnapshot => {
+                    getDocs(collection(db, 'workSchedules')).then(querySnapshot => {
                         const events = [];
                         querySnapshot.forEach(doc => {
                             const data = doc.data();
                             events.push({
-                                title: data.title,
-                                start: data.start,
-                                end: data.end,
+                                title: `Werkrooster: ${data.employeeId}`,
+                                start: data.startTime,
+                                end: data.endTime,
                                 backgroundColor: getColor(data.employeeId),
                                 borderColor: getColor(data.employeeId)
                             });
                         });
                         successCallback(events);
                     }).catch(error => {
-                        console.error('Fout bij het ophalen van events:', error);
+                        console.error('Fout bij het ophalen van werkroosters:', error);
                         failureCallback(error);
                     });
                 }
@@ -150,7 +175,7 @@
             font-family: Arial, sans-serif;
             color: white;
         }
-        .assign-container, .calendar-container {
+        .assign-container, .calendar-container, .schedule-container {
             background-color: #333;
             padding: 20px;
             border-radius: 10px;
@@ -158,33 +183,33 @@
             margin: 10px;
             width: 80%;
         }
-        .assign-container h1, .calendar-container h1 {
+        .assign-container h1, .calendar-container h1, .schedule-container h1 {
             color: white;
             margin-bottom: 20px;
         }
-        .assign-container label, .calendar-container label {
+        .assign-container label, .calendar-container label, .schedule-container label {
             color: white;
             display: block;
             text-align: left;
             margin-bottom: 5px;
         }
-        .assign-container select, .assign-container button {
+        .assign-container select, .schedule-container select, .assign-container button, .schedule-container button, .schedule-container input {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
             border: none;
             border-radius: 5px;
         }
-        .assign-container select {
+        .assign-container select, .schedule-container select, .schedule-container input {
             background-color: #3a3a3a;
             color: white;
         }
-        .assign-container button {
+        .assign-container button, .schedule-container button {
             background-color: limegreen;
             color: white;
             cursor: pointer;
         }
-        .assign-container button:hover {
+        .assign-container button:hover, .schedule-container button:hover {
             background-color: darkgreen;
         }
         #employee-legend div {
@@ -207,6 +232,20 @@
             <button type="submit">Toewijzen</button>
         </form>
     </div>
+
+    <div class="schedule-container">
+        <h1>Plan een Werkrooster</h1>
+        <form id="schedule-form">
+            <label for="employee-select">Selecteer Werknemer:</label>
+            <select id="employee-select" required></select>
+            <label for="start-time">Starttijd:</label>
+            <input type="datetime-local" id="start-time" required>
+            <label for="end-time">Eindtijd:</label>
+            <input type="datetime-local" id="end-time" required>
+            <button type="submit">Rooster toevoegen</button>
+        </form>
+    </div>
+
     <div class="calendar-container">
         <h1>Gezamenlijke Agenda</h1>
         <div id="employee-legend"></div>
@@ -214,3 +253,4 @@
     </div>
 </body>
 </html>
+
