@@ -10,7 +10,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, doc, getDoc, getDocs, collection, query, where, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, getDocs, collection, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
@@ -33,7 +33,7 @@
                 getDoc(userDocRef).then(doc => {
                     if (doc.exists && doc.data().Role === 'Admin') {
                         console.log('Admin ingelogd:', user);
-                        loadEmployees();
+                        loadEmployees();  // Werknemers laden
                         loadCustomers();
                         loadCalendar();
                     } else {
@@ -47,18 +47,27 @@
             }
         });
 
-        // Functie om werknemers op te halen
+        // Functie om werknemers op te halen en ze in beide select-elementen te plaatsen
         function loadEmployees() {
             getDocs(collection(db, 'employees')).then(querySnapshot => {
                 const employeeSelect = document.getElementById('employee-select');
+                const employeeSelectSchedule = document.getElementById('employee-select-schedule');
                 const employeeLegend = document.getElementById('employee-legend');
+                
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
                     const option = document.createElement('option');
                     option.value = doc.id;
                     option.textContent = `${data.FirstName} ${data.LastName}`;
+                    
+                    // Voeg werknemer toe aan de 'Toewijzen' selectie
                     employeeSelect.appendChild(option);
 
+                    // Voeg werknemer toe aan de 'Plan een Werkrooster' selectie
+                    const scheduleOption = option.cloneNode(true);
+                    employeeSelectSchedule.appendChild(scheduleOption);
+
+                    // Voeg werknemer toe aan de legende van de agenda
                     const color = getColor(doc.id);
                     const legendItem = document.createElement('div');
                     legendItem.innerHTML = `<span style="background-color: ${color}; width: 10px; height: 10px; display: inline-block; margin-right: 5px;"></span>${data.FirstName}`;
@@ -161,7 +170,6 @@
         });
     </script>
     <style>
-        /* Je bestaande stijlen blijven hetzelfde */
         body {
             display: flex;
             flex-direction: column;
