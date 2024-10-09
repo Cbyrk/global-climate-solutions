@@ -11,7 +11,7 @@
         // Firebase imports
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js';
-        import { getFirestore, collection, doc, getDoc, getDocs, addDoc, query, where } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
+        import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyA4fqK1WbKmpCNcj-6TjB6dqbsw6R3mwnI",
@@ -36,6 +36,7 @@
                     if (doc.exists && doc.data().Role === 'Admin') {
                         console.log('Admin ingelogd:', user);
                         loadEmployees();
+                        loadCustomers();
                         loadCalendar();
                     } else {
                         console.log('Geen adminrechten.');
@@ -51,17 +52,27 @@
         // Functie om werknemers op te halen voor zowel planning als het toewijzen
         function loadEmployees() {
             getDocs(collection(db, 'employees')).then(querySnapshot => {
-                const employeeSelect = document.getElementById('employee-select-schedule');
+                const employeeSelectSchedule = document.getElementById('employee-select-schedule');
+                const employeeSelectAssign = document.getElementById('employee-select');
                 const employeeLegend = document.getElementById('employee-legend');
+                
+                employeeSelectSchedule.innerHTML = ''; // Maak het veld leeg
+                employeeSelectAssign.innerHTML = ''; // Maak het veld leeg
 
                 querySnapshot.forEach(doc => {
                     const data = doc.data();
 
                     // Voeg werknemer toe aan selecteerlijst voor rooster
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = `${data.FirstName} ${data.LastName}`;
-                    employeeSelect.appendChild(option);
+                    const optionSchedule = document.createElement('option');
+                    optionSchedule.value = doc.id;
+                    optionSchedule.textContent = `${data.FirstName} ${data.LastName}`;
+                    employeeSelectSchedule.appendChild(optionSchedule);
+
+                    // Voeg werknemer toe aan selecteerlijst voor toewijzing aan klant
+                    const optionAssign = document.createElement('option');
+                    optionAssign.value = doc.id;
+                    optionAssign.textContent = `${data.FirstName} ${data.LastName}`;
+                    employeeSelectAssign.appendChild(optionAssign);
 
                     // Voeg werknemer toe aan de legende
                     const color = getColor(doc.id);
@@ -72,11 +83,20 @@
             });
         }
 
-        // Functie om kleuren toe te wijzen aan werknemers
-        function getColor(employeeId) {
-            const colors = ['#FF5733', '#33FF57', '#3357FF', '#F33FFF', '#FF33A1', '#33FFF5', '#FF8F33', '#33FF8F'];
-            const index = employeeId.charCodeAt(0) % colors.length;
-            return colors[index];
+        // Functie om klanten op te halen
+        function loadCustomers() {
+            getDocs(collection(db, 'customers')).then(querySnapshot => {
+                const customerSelect = document.getElementById('customer-select');
+                customerSelect.innerHTML = ''; // Maak het veld leeg
+
+                querySnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = data['Customer Name'];
+                    customerSelect.appendChild(option);
+                });
+            });
         }
 
         // Functie om een werkrooster toe te voegen
@@ -103,6 +123,24 @@
             }).catch((error) => {
                 console.error('Fout bij het toevoegen van rooster:', error);
                 alert('Er is een fout opgetreden bij het toevoegen: ' + error.message);
+            });
+        });
+
+        // Functie om werknemer aan klant toe te wijzen
+        document.getElementById('assign-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const employeeId = document.getElementById('employee-select').value;
+            const customerId = document.getElementById('customer-select').value;
+
+            const employeeDocRef = doc(db, 'employees', employeeId);
+            updateDoc(employeeDocRef, {
+                customerId: customerId
+            }).then(() => {
+                alert('Werknemer succesvol toegewezen aan klant');
+                document.getElementById('assign-form').reset();
+            }).catch((error) => {
+                console.error('Fout bij het toewijzen van werknemer aan klant:', error);
+                alert('Er is een fout opgetreden bij het toewijzen: ' + error.message);
             });
         });
 
@@ -169,31 +207,25 @@
                 popup.style.display = 'none';
             }
         });
+
+        // Functie om kleuren toe te wijzen aan werknemers
+        function getColor(employeeId) {
+            const colors = ['#FF5733', '#33FF57', '#3357FF', '#F33FFF', '#FF33A1', '#33FFF5', '#FF8F33', '#33FF8F'];
+            const index = employeeId.charCodeAt(0) % colors.length;
+            return colors[index];
+        }
     </script>
     <style>
         /* Pop-up styling */
         #popup {
             display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.8);
+            position: absolute;
+            background-color: #333;
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             z-index: 1000;
-            max-width: 300px;
-            text-align: center;
-            font-size: 16px;
-        }
-        #popup h3 {
-            margin: 0;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        #popup p {
-            margin: 10px 0;
         }
 
         body {
@@ -262,6 +294,7 @@
     </style>
 </head>
 <body>
+    <!-- Pop-up -->
     <div id="popup">
         <h3 id="popup-title"></h3>
         <p>Starttijd: <span id="popup-start"></span></p>
